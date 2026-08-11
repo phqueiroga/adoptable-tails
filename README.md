@@ -40,6 +40,10 @@ Never place API keys in browser code or commit them to GitHub. Local secrets bel
 
 The project now includes a Supabase schema, a 40-animal fictional Irish seed inventory, a structured questionnaire, and a deterministic matching engine. The final demonstration will query the deployed Supabase database; RescueGroups can be added later without changing the matching workflow.
 
+The five agent definitions and their assessment alignment are documented in
+`docs/agent-designs.md`. The protected `match-agents` Edge Function implements
+the cumulative Scout -> Harmony -> PawBuilder -> TailTalk -> ShelterLead flow.
+
 ## Local validation
 
 ```bash

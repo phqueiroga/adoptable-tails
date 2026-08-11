@@ -24,6 +24,11 @@ Five-agent explanation and validation workflow
 Three transparent recommendations
 ```
 
+Scout performs the live Supabase REST query inside the Researcher stage. Each
+structured output is stored in a protected `pipeline_runs` record before being
+passed to the next agent. This creates timestamped evidence of the mandatory
+cumulative handoff without exposing it through the public Data API.
+
 ## Trust boundary
 
 The GitHub Pages frontend is public and must contain no credentials. The serverless API owns provider credentials, validates request payloads, limits usage, queries the live data source, and returns only the fields required by the interface.
