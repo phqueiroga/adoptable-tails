@@ -1,62 +1,48 @@
-# Short testing guide
+# Adoptable Tails — quick test script
 
-Use this cycle throughout development: **run → inspect failures → record the gap → change one thing → rerun the same scenario**. Keep the before-and-after run IDs as evidence in the iteration log.
-
-## 1. Free checks after every change
+## A. Free check (every change)
 
 ```bash
-npm test
-npm run check
+npm test && npm run check
 ```
 
-These verify deterministic matching, unknown-data handling, ranking limits, JavaScript syntax, and the evaluation rules. They do not call Claude and cost nothing.
+Expected: **6 tests pass** and no syntax errors. These checks do not call Claude.
 
-## 2. Five-minute customer journey check
-
-Open the public URL on both a laptop and phone, then confirm:
-
-1. All 12 questions can be answered and Back/Continue preserve selections.
-2. Missing answers show a clear error rather than submitting.
-3. The waiting screen names all five agents and explains the expected delay.
-4. Results show 1–3 cards, a live record count and timestamp, balanced strengths and questions, and a non-binding AI notice.
-5. “See how the five agents collaborated” shows Scout → Harmony → PawBuilder → TailTalk → ShelterLead.
-6. The Manager result says Approved. If it does not, no recommendations should be trusted.
-7. No name, email, secret key, or adoption approval is requested or displayed.
-
-Record browser, device, scenario, outcome, run ID, gap found, and action taken in `docs/iteration-log.md`.
-
-## 3. Live agent evaluation
-
-One scenario runs five Claude calls, so run it intentionally:
-
-```bash
-npm run evaluate -- --list
-npm run evaluate -- apartment-dog
-```
-
-For a broader comparison across three profiles:
+## B. Live agent check (before demonstrations and submission)
 
 ```bash
 npm run evaluate -- --all
 ```
 
-The script checks 14 requirements across the live source, all five agents, score integrity, handoff IDs, balanced communication, manager approval, and audit evidence. It prints PASS/FAIL results and saves a dated JSON report in `evaluation-results/`.
+This runs three intentionally different profiles. Each profile calls all five Claude agents, so use it deliberately.
 
-## 4. What each scenario challenges
-
-| Scenario | Main risk tested |
+| Try | What it challenges |
 |---|---|
-| `apartment-dog` | Apartment suitability, garden restriction, first-time owner, alone-time interpretation |
-| `family-with-cat` | Child safety, existing-cat conflict, “either” species, preferences not becoming exclusions |
-| `experienced-active` | High activity, experienced care, large/young preferences, openness to special needs |
+| Apartment dog | No garden, first-time adopter, alone-time and apartment suitability |
+| Family with cat | Young children, existing cat, either species, hard welfare conflicts |
+| Experienced active | High activity, young/large preferences, special-needs openness |
 
-## 5. How to handle a failure
+Expected for every try: **14/14 PASS** and a Supabase run ID. The dated JSON report is saved in `evaluation-results/`.
 
-- **Scout failure:** wrong live count, stale timestamp, unsafe candidate ID, or missing unknowns → inspect live query and Researcher prompt.
-- **Harmony failure:** preferences treated as hard exclusions or unclear card requirements → refine the design rules.
-- **PawBuilder failure:** score changed, order changed, more than three results, or invented evidence → fix deterministic handoff and Maker prompt.
-- **TailTalk failure:** unsupported claim, pressure language, missing questions, or adoption guarantee → tighten communication constraints.
-- **ShelterLead failure:** approves any issue above or fails to explain rejection → strengthen validation checks and rerun the identical profile.
-- **Interface failure:** request, progress, rendering, accessibility, or mobile issue → fix the public page and repeat the customer journey.
+## C. Two-minute interface check
 
-A failed live run is useful assignment evidence when the gap, correction, and successful rerun are documented.
+On both phone and laptop:
+
+1. Complete all four questionnaire steps; also try Continue once with an unanswered question.
+2. Confirm the waiting screen shows the five agents in the correct order.
+3. Confirm results contain 1–3 ranked cards, live count/time, strengths, questions, AI disclaimer, and Manager approval.
+4. Open “See how the five agents collaborated” and confirm Scout → Harmony → PawBuilder → TailTalk → ShelterLead.
+5. Confirm no name, email, secret key, guarantee, or adoption approval appears.
+
+## If anything fails
+
+| Failure | Inspect first |
+|---|---|
+| Live count, timestamp, unsafe candidate | Scout / live query |
+| Preference used as an exclusion | Harmony |
+| Score, order, shortlist, invented evidence | PawBuilder |
+| Unsupported claim, pressure, missing question | TailTalk |
+| Incorrect approval or weak rejection reason | ShelterLead |
+| Form, waiting screen, cards, phone layout | Public interface |
+
+Record only: **date · scenario · run ID · failure · one change made · rerun result** in `docs/iteration-log.md`. A failed run followed by a documented improvement is useful assignment evidence.
