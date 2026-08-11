@@ -43,6 +43,8 @@ The project now includes a Supabase schema, a 40-animal fictional Irish seed inv
 The five agent definitions and their assessment alignment are documented in
 `docs/agent-designs.md`. The protected `match-agents` Edge Function implements
 the cumulative Scout -> Harmony -> PawBuilder -> TailTalk -> ShelterLead flow.
+Technical failures, corrections, and the first verified baseline run are
+recorded in `docs/iteration-log.md`.
 
 ## Local validation
 

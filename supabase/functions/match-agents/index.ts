@@ -132,7 +132,7 @@ async function callAgent(key: Parameters<typeof getAgent>[0], input: unknown) {
     headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
     body: JSON.stringify({
       model,
-      max_tokens: 1400,
+      max_tokens: 2600,
       temperature: 0.2,
       system: agent.system,
       messages: [{ role: "user", content: JSON.stringify(input) }],
@@ -141,6 +141,7 @@ async function callAgent(key: Parameters<typeof getAgent>[0], input: unknown) {
   });
   if (!response.ok) throw new Error(`ANTHROPIC_${response.status}`);
   const message = await response.json();
+  if (message.stop_reason === "max_tokens") throw new Error(`ANTHROPIC_TRUNCATED_${key.toUpperCase()}`);
   const text = message.content?.find((item: { type: string }) => item.type === "text")?.text;
   if (!text) throw new Error("ANTHROPIC_EMPTY_OUTPUT");
   return JSON.parse(text);
@@ -164,23 +165,29 @@ Deno.serve(async (req) => {
     // Scout's tool call: live retrieval happens inside the Researcher stage.
     const live = await fetchLiveAnimals(profile);
     await updateRun(runId, { live_query: live.evidence });
-    const researcher = await callAgent("researcher", { profile, live_query: live.evidence, animals: live.animals });
+    const fieldSemantics = {
+      max_alone_hours: "Animal tolerance capacity. Compatible when animal.max_alone_hours >= profile.maxAloneHours.",
+      preferredAge: "Weighted preference, not a hard exclusion.",
+      preferredSize: "Weighted preference, not a hard exclusion.",
+      null: "Unknown evidence; never a positive match."
+    };
+    const researcher = await callAgent("researcher", { profile, field_semantics: fieldSemantics, live_query: live.evidence, animals: live.animals });
     await updateRun(runId, { researcher_output: researcher });
 
-    const designer = await callAgent("designer", { profile, researcher });
+    const designer = await callAgent("designer", { profile, field_semantics: fieldSemantics, researcher });
     await updateRun(runId, { designer_output: designer });
 
     const candidateIds = new Set<string>(researcher.candidate_ids ?? []);
     const scored = live.animals.filter((a) => candidateIds.has(a.id) && !conflict(profile, a)).map((a) => score(profile, a)).sort((a, b) => b.score - a.score).slice(0, 8);
-    const maker = await callAgent("maker", { profile, designer, deterministic_candidates: scored });
+    const maker = await callAgent("maker", { profile, field_semantics: fieldSemantics, designer, deterministic_candidates: scored });
     await updateRun(runId, { maker_output: maker });
 
     const selected = new Set<string>((maker.shortlist ?? []).map((item: { animal_id: string }) => item.animal_id));
     const selectedAnimals = live.animals.filter((a) => selected.has(a.id));
-    const communicator = await callAgent("communicator", { maker, animals: selectedAnimals });
+    const communicator = await callAgent("communicator", { field_semantics: fieldSemantics, maker, animals: selectedAnimals });
     await updateRun(runId, { communicator_output: communicator });
 
-    const manager = await callAgent("manager", { profile, live_query: live.evidence, animals: selectedAnimals, researcher, designer, maker, communicator });
+    const manager = await callAgent("manager", { profile, field_semantics: fieldSemantics, live_query: live.evidence, animals: selectedAnimals, researcher, designer, maker, communicator });
     const status = manager.decision === "approved" ? "completed" : "rejected";
     await updateRun(runId, { manager_output: manager, status, completed_at: new Date().toISOString() });
 
