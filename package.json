@@ -1,0 +1,13 @@
+{
+  "name": "adoptable-tails",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check src/matching.js && node --check src/questionnaire.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -11,8 +11,8 @@ The system recommends animals for further consideration. It does not approve ado
 - Animals: cats and dogs
 - AI provider: Anthropic
 - AI model: Claude Haiku 4.5
-- Preferred live-data source: RescueGroups
-- Fallback live-data source: Supabase
+- Primary live-data source: Supabase
+- Optional later data source: RescueGroups
 - Public interface: GitHub Pages
 - Protected backend: serverless API (provider to be confirmed)
 
@@ -38,7 +38,14 @@ Never place API keys in browser code or commit them to GitHub. Local secrets bel
 
 ## Status
 
-The project is in its initial planning and scaffolding stage. Development can use local fixtures while the RescueGroups request is pending, but the final demonstration will query a live data source.
+The project now includes a Supabase schema, a 40-animal fictional Irish seed inventory, a structured questionnaire, and a deterministic matching engine. The final demonstration will query the deployed Supabase database; RescueGroups can be added later without changing the matching workflow.
+
+## Local validation
+
+```bash
+npm test
+npm run check
+```
 
 ## Academic use
 
