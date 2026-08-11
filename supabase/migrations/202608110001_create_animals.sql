@@ -34,6 +34,9 @@ create index animals_available_species_idx
 
 alter table public.animals enable row level security;
 
+grant usage on schema public to anon, authenticated;
+grant select on table public.animals to anon, authenticated;
+
 create policy "Public may read available animals"
   on public.animals
   for select
