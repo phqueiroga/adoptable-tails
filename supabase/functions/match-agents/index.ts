@@ -26,7 +26,7 @@ function corsHeaders() {
   return {
     "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Vary": "Origin"
   };
 }
@@ -100,6 +100,9 @@ function conflict(profile: Profile, a: Record<string, unknown>): string | null {
   if (profile.hasCats && a.good_with_cats === false) return "cat conflict";
   if (!profile.hasGarden && a.garden_required === true) return "garden required";
   if (!profile.openToSpecialNeeds && a.special_needs === true) return "special needs conflict";
+  if (profile.homeType === "apartment" && a.apartment_suitable !== true) return "not apartment suitable";
+  if (typeof a.max_alone_hours !== "number") return "alone time unknown";
+  if (profile.maxAloneHours > a.max_alone_hours) return "alone time conflict";
   return null;
 }
 
@@ -151,17 +154,8 @@ async function updateRun(id: string, patch: Record<string, unknown>) {
   await db(`pipeline_runs?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch), headers: { Prefer: "return=minimal" } }, true);
 }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders() });
-  if (req.method !== "POST") return json({ error: "METHOD_NOT_ALLOWED" }, 405);
-
-  let runId: string | null = null;
+async function runPipeline(runId: string, profile: Profile) {
   try {
-    await enforceDailyCap();
-    const profile = validateProfile((await req.json()).profile);
-    const created = await db("pipeline_runs", { method: "POST", body: JSON.stringify({ model, profile }) }, true) as Array<{ id: string }>;
-    runId = created[0].id;
-
     // Scout's tool call: live retrieval happens inside the Researcher stage.
     const live = await fetchLiveAnimals(profile);
     await updateRun(runId, { live_query: live.evidence });
@@ -191,10 +185,44 @@ Deno.serve(async (req) => {
     const status = manager.decision === "approved" ? "completed" : "rejected";
     await updateRun(runId, { manager_output: manager, status, completed_at: new Date().toISOString() });
 
-    return json({ run_id: runId, status, live_query: live.evidence, researcher, designer, maker, communicator, manager });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN_ERROR";
-    if (runId) await updateRun(runId, { status: "failed", error_code: code, completed_at: new Date().toISOString() }).catch(() => undefined);
+    await updateRun(runId, { status: "failed", error_code: code, completed_at: new Date().toISOString() }).catch(() => undefined);
+  }
+}
+
+function validRunId(value: string | null): value is string {
+  return Boolean(value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value));
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders() });
+
+  if (req.method === "GET") {
+    const runId = new URL(req.url).searchParams.get("run_id");
+    if (!validRunId(runId)) return json({ error: "INVALID_RUN_ID" }, 400);
+    const rows = await db(`pipeline_runs?id=eq.${runId}&select=id,status,error_code,live_query,researcher_output,designer_output,maker_output,communicator_output,manager_output`, {}, true) as Array<Record<string, unknown>>;
+    if (!rows.length) return json({ error: "RUN_NOT_FOUND" }, 404);
+    const row = rows[0];
+    if (row.status === "started") return json({ run_id: row.id, status: row.status });
+    if (row.status === "failed") return json({ run_id: row.id, status: row.status, error: row.error_code });
+    return json({
+      run_id: row.id, status: row.status, live_query: row.live_query,
+      researcher: row.researcher_output, designer: row.designer_output,
+      maker: row.maker_output, communicator: row.communicator_output, manager: row.manager_output
+    });
+  }
+
+  if (req.method !== "POST") return json({ error: "METHOD_NOT_ALLOWED" }, 405);
+  try {
+    await enforceDailyCap();
+    const profile = validateProfile((await req.json()).profile);
+    const created = await db("pipeline_runs", { method: "POST", body: JSON.stringify({ model, profile }) }, true) as Array<{ id: string }>;
+    const runId = created[0].id;
+    EdgeRuntime.waitUntil(runPipeline(runId, profile));
+    return json({ run_id: runId, status: "started" }, 202);
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "UNKNOWN_ERROR";
     const status = code === "DAILY_LIMIT_REACHED" ? 429 : code === "INVALID_PROFILE" ? 400 : code === "ANTHROPIC_NOT_CONFIGURED" ? 503 : 500;
     return json({ error: code }, status);
   }

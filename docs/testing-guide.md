@@ -14,13 +14,14 @@ Expected: **6 tests pass** and no syntax errors. These checks do not call Claude
 npm run evaluate -- --all
 ```
 
-This runs three intentionally different profiles. Each profile calls all five Claude agents, so use it deliberately.
+This runs four intentionally different profiles. Each profile calls all five Claude agents, so use it deliberately.
 
 | Try | What it challenges |
 |---|---|
 | Apartment dog | No garden, first-time adopter, alone-time and apartment suitability |
 | Family with cat | Young children, existing cat, either species, hard welfare conflicts |
 | Experienced active | High activity, young/large preferences, special-needs openness |
+| Long-day apartment | Maximum alone time plus children, dogs, cats, no garden, and first-time experience |
 
 Expected for every try: **14/14 PASS** and a Supabase run ID. The dated JSON report is saved in `evaluation-results/`.
 

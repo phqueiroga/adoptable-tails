@@ -106,11 +106,26 @@ function renderResults(data) {
 function renderError(status, code) {
   const daily = status === 429 || code === "DAILY_LIMIT_REACHED";
   const config = status === 503 || code === "ANTHROPIC_NOT_CONFIGURED";
-  const title = daily ? "Today’s search limit has been reached" : config ? "The AI service is being configured" : "We couldn’t complete the search";
-  const message = daily ? "To control costs, this prototype accepts a limited number of searches each day. Please return tomorrow." : config ? "The protected Claude connection isn’t available yet. Please try again later." : "No recommendations were shown because the full five-agent review did not finish safely. Please try again.";
+  const rejected = code === "MANAGER_REJECTED";
+  const title = daily ? "Today’s search limit has been reached" : config ? "The AI service is being configured" : rejected ? "The safety review stopped this shortlist" : "We couldn’t complete the search";
+  const message = daily ? "To control costs, this prototype accepts a limited number of searches each day. Please return tomorrow." : config ? "The protected Claude connection isn’t available yet. Please try again later." : rejected ? "ShelterLead found a welfare or evidence conflict, so no recommendations were shown. Please adjust the profile or try again." : "No recommendations were shown because the full five-agent review did not finish safely. Please try again.";
   const results=document.querySelector("#results"); results.innerHTML=`<div class="error-state"><p class="eyebrow">Search not completed</p><h2>${title}</h2><p>${message}</p><button class="button primary" id="restart-button">Try again</button></div>`;results.hidden=false;results.scrollIntoView({behavior:"smooth"});document.querySelector("#restart-button").addEventListener("click",reset);
 }
 function reset(){ clearInterval(progressTimer); document.querySelector("#processing").hidden=true; document.querySelector("#results").hidden=true; document.querySelector("#matcher").hidden=false; showStep(0); document.querySelector("#matcher").scrollIntoView({behavior:"smooth"}); }
+
+const requestHeaders = {"Content-Type":"application/json","apikey":PUBLISHABLE_KEY,"Authorization":`Bearer ${PUBLISHABLE_KEY}`};
+const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+async function waitForRun(runId) {
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    const response = await fetch(`${ENDPOINT}?run_id=${encodeURIComponent(runId)}`, { headers: requestHeaders });
+    const data = await response.json().catch(() => ({error:"INVALID_RESPONSE"}));
+    if (!response.ok) throw Object.assign(new Error(data.error || "REQUEST_FAILED"), {status:response.status});
+    if (data.status === "failed") throw new Error(data.error || "PIPELINE_FAILED");
+    if (data.status === "completed" || data.status === "rejected") return data;
+    await delay(3000);
+  }
+  throw new Error("PIPELINE_TIMEOUT");
+}
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -119,10 +134,34 @@ form.addEventListener("submit", async (event) => {
   document.querySelector("#matcher").hidden = true; document.querySelector("#results").hidden = true; document.querySelector("#processing").hidden = false;
   document.querySelector("#processing").scrollIntoView({behavior:"smooth"}); startProgress();
   try {
-    const response = await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json","apikey":PUBLISHABLE_KEY,"Authorization":`Bearer ${PUBLISHABLE_KEY}`},body:JSON.stringify({profile})});
-    const data = await response.json().catch(()=>({error:"INVALID_RESPONSE"}));
+    const response = await fetch(ENDPOINT,{method:"POST",headers:requestHeaders,body:JSON.stringify({profile})});
+    let data = await response.json().catch(()=>({error:"INVALID_RESPONSE"}));
     if (!response.ok) throw Object.assign(new Error(data.error || "REQUEST_FAILED"),{status:response.status});
+    sessionStorage.setItem("adoptableTailsRunId", data.run_id);
+    if (data.status === "started") data = await waitForRun(data.run_id);
+    sessionStorage.removeItem("adoptableTailsRunId");
     clearInterval(progressTimer); document.querySelectorAll("#pipeline li").forEach(li=>li.className="done");
-    document.querySelector("#processing").hidden=true; renderResults(data);
+    document.querySelector("#processing").hidden=true;
+    if (data.status === "rejected") renderError(422, "MANAGER_REJECTED"); else renderResults(data);
   } catch (error) { clearInterval(progressTimer); document.querySelector("#processing").hidden=true; renderError(error.status,error.message); }
 });
+
+async function resumePendingRun() {
+  const runId = sessionStorage.getItem("adoptableTailsRunId");
+  if (!runId) return;
+  document.querySelector("#matcher").hidden = true;
+  document.querySelector("#processing").hidden = false;
+  startProgress();
+  try {
+    const data = await waitForRun(runId);
+    sessionStorage.removeItem("adoptableTailsRunId");
+    clearInterval(progressTimer);
+    document.querySelector("#processing").hidden = true;
+    if (data.status === "rejected") renderError(422, "MANAGER_REJECTED"); else renderResults(data);
+  } catch (error) {
+    clearInterval(progressTimer);
+    document.querySelector("#processing").hidden = true;
+    renderError(error.status, error.message);
+  }
+}
+resumePendingRun();

@@ -19,6 +19,11 @@ const scenarios = {
     species: "dog", homeType: "house", hasGarden: true, childrenAge: "none",
     hasDogs: false, hasCats: false, experienceLevel: "experienced", activityLevel: "high",
     maxAloneHours: 3, preferredAge: "young", preferredSize: "large", openToSpecialNeeds: true
+  },
+  "long-day-apartment": {
+    species: "dog", homeType: "apartment", hasGarden: false, childrenAge: "under_8",
+    hasDogs: true, hasCats: true, experienceLevel: "first_time", activityLevel: "medium",
+    maxAloneHours: 10, preferredAge: "any", preferredSize: "any", openToSpecialNeeds: false
   }
 };
 
@@ -34,6 +39,20 @@ if (!runAll && !scenarios[requested]) {
   process.exit(2);
 }
 const selected = runAll ? Object.entries(scenarios) : [[requested, scenarios[requested]]];
+const headers = { "Content-Type": "application/json", apikey: KEY, Authorization: `Bearer ${KEY}` };
+const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+async function waitForRun(runId) {
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    const response = await fetch(`${ENDPOINT}?run_id=${encodeURIComponent(runId)}`, { headers });
+    const data = await response.json();
+    if (!response.ok) throw new Error(`${response.status} ${data.error ?? "REQUEST_FAILED"}`);
+    if (data.status === "failed") throw new Error(data.error ?? "PIPELINE_FAILED");
+    if (data.status === "completed" || data.status === "rejected") return data;
+    await delay(3000);
+  }
+  throw new Error("PIPELINE_TIMEOUT");
+}
 
 console.log(`Running ${selected.length} live scenario(s). Each scenario invokes all five Claude agents.`);
 const report = { generated_at: new Date().toISOString(), endpoint: ENDPOINT, model: "Claude Haiku 4.5", results: [] };
@@ -44,11 +63,12 @@ for (const [name, profile] of selected) {
   try {
     const response = await fetch(ENDPOINT, {
       method: "POST",
-      headers: { "Content-Type": "application/json", apikey: KEY, Authorization: `Bearer ${KEY}` },
+      headers,
       body: JSON.stringify({ profile })
     });
-    const data = await response.json();
+    let data = await response.json();
     if (!response.ok) throw new Error(`${response.status} ${data.error ?? "REQUEST_FAILED"}`);
+    if (data.status === "started") data = await waitForRun(data.run_id);
     const evaluation = evaluatePipeline(data);
     report.results.push({ scenario: name, profile, duration_seconds: Math.round((Date.now() - started) / 1000), run_id: data.run_id, evaluation });
     for (const check of evaluation.checks) console.log(`${check.passed ? "PASS" : "FAIL"}  ${check.name} — ${check.detail}`);

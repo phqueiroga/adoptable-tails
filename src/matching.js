@@ -35,6 +35,15 @@ export function findHardConflict(profile, animal) {
   if (!profile.openToSpecialNeeds && animal.special_needs === true) {
     return "Has ongoing needs outside the adopter's stated capacity";
   }
+  if (profile.homeType === "apartment" && animal.apartment_suitable !== true) {
+    return "Not confirmed as suitable for an apartment";
+  }
+  if (!known(animal.max_alone_hours)) {
+    return "Alone-time tolerance is unknown";
+  }
+  if (profile.maxAloneHours > animal.max_alone_hours) {
+    return "Recorded alone-time tolerance is below the adopter's requirement";
+  }
   return null;
 }
 

@@ -40,11 +40,17 @@ test("excludes an animal with an explicit household conflict", () => {
   assert.match(conflict, /unsuitable with cats/i);
 });
 
+test("excludes an animal whose alone-time capacity is too low", () => {
+  const animal = { ...dog, max_alone_hours: 5 };
+  const result = scoreAnimal({ ...profile, maxAloneHours: 6 }, animal);
+  assert.equal(result.eligible, false);
+  assert.match(result.conflict, /alone-time tolerance/i);
+});
+
 test("does not turn unknown evidence into a positive match", () => {
   const result = scoreAnimal(profile, { ...dog, max_alone_hours: null });
-  assert.equal(result.eligible, true);
-  assert.ok(result.unknown.includes("alone time"));
-  assert.ok(result.score < 100);
+  assert.equal(result.eligible, false);
+  assert.match(result.conflict, /unknown/i);
 });
 
 test("ranks eligible animals and limits the shortlist", () => {
