@@ -53,6 +53,10 @@ npm test
 npm run check
 ```
 
+Repeatable agent and customer-journey evaluation is documented in
+`docs/testing-guide.md`. A single live five-agent scenario can be run with
+`npm run evaluate -- apartment-dog`.
+
 To preview the public interface, serve the repository root with any static web
 server and open `index.html`. The browser uses only the Supabase publishable key;
 the Anthropic key remains protected in the hosted Edge Function environment.
