@@ -13,8 +13,8 @@ The system recommends animals for further consideration. It does not approve ado
 - AI model: Claude Haiku 4.5
 - Primary live-data source: Supabase
 - Optional later data source: RescueGroups
-- Public interface: GitHub Pages
-- Protected backend: serverless API (provider to be confirmed)
+- Public interface: static, accessible website designed for GitHub Pages
+- Protected backend: hosted Supabase Edge Function
 
 ## Five-agent workflow
 
@@ -52,6 +52,10 @@ recorded in `docs/iteration-log.md`.
 npm test
 npm run check
 ```
+
+To preview the public interface, serve the repository root with any static web
+server and open `index.html`. The browser uses only the Supabase publishable key;
+the Anthropic key remains protected in the hosted Edge Function environment.
 
 ## Academic use
 
