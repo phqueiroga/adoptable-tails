@@ -18,7 +18,11 @@ export function validateHandoff(stage, output, cumulative = {}) {
     if ((output.evidence_items?.length ?? 0) < 3) errors.push("Researcher requires at least three evidence items");
     if (!output.evidence_items?.every((item) => item.entity_id && item.source_url)) errors.push("Every evidence item needs an ID and source URL");
   }
-  if (stage === "designer" && !productTypes.includes(output.selected_product)) errors.push("Designer selected an invalid product");
+  if (stage === "designer") {
+    if (!productTypes.includes(output.selected_product)) errors.push("Designer selected an invalid product");
+    const evidenceIds=new Set(cumulative.researcher?.evidence_items?.map((item)=>item.entity_id)??[]);
+    if (!output.required_evidence_ids?.every((id)=>evidenceIds.has(id))) errors.push("Designer referenced evidence IDs not supplied by Researcher");
+  }
   if (stage === "maker") {
     if (output.product_type !== cumulative.designer?.selected_product) errors.push("Maker changed the selected product");
     if (!output.files?.html || !output.files?.css || !output.files?.javascript) errors.push("Maker must deliver HTML, CSS and JavaScript");
