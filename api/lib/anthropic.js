@@ -10,10 +10,19 @@ async function request(body) {
 
 function textOf(message) { return message.content?.find((item) => item.type === "text")?.text; }
 
+function parseOutput(message, agent) {
+  const text = textOf(message);
+  if (!text) throw new Error(`${agent.name}_EMPTY_OUTPUT`);
+  try { return JSON.parse(text); }
+  catch { throw new Error(`${agent.name}_TRUNCATED_OUTPUT`); }
+}
+
 export async function callStructured(agent, input) {
-  const message = await request({ model, max_tokens: agent.name === "Forge" ? 8000 : 6000, temperature: 0.2, system: agent.system, messages:[{role:"user",content:JSON.stringify(input)}], output_config:{format:{type:"json_schema",schema:agent.schema}} });
-  const text = textOf(message); if (!text) throw new Error(`${agent.name}_EMPTY_OUTPUT`);
-  return { output: JSON.parse(text), usage: message.usage, model };
+  const isForge=agent.name==="Forge",max_tokens=isForge?8000:6000;
+  const create=(instruction)=>request({model,max_tokens,temperature:0.2,system:agent.system,messages:[{role:"user",content:JSON.stringify({...input,instruction})}],output_config:{format:{type:"json_schema",schema:agent.schema}}});
+  let message=await create(isForge?"Build a complete but compact prototype. Keep HTML+CSS+JavaScript below 9000 characters total.":"Return the required structured handoff concisely.");
+  try{return{output:parseOutput(message,agent),usage:message.usage,model}}
+  catch(error){if(!(error instanceof Error)||!error.message.endsWith("_TRUNCATED_OUTPUT"))throw error;message=await create(isForge?"RETRY: your previous output was truncated. Produce a simpler complete prototype with no more than 6500 total code characters. Prioritise working core interaction and accessibility.":"RETRY: produce a shorter complete handoff within the schema.");return{output:parseOutput(message,agent),usage:message.usage,model,retried:true}}
 }
 
 export async function callResearcherWithTool(agent, briefing, toolExecutor) {
