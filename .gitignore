@@ -5,6 +5,8 @@
 
 # Dependencies and build output
 node_modules/
+.vercel/
+.env*.local
 dist/
 .vercel/
 
@@ -23,3 +25,5 @@ evaluation-results/
 # Logs
 *.log
 npm-debug.log*
+.vercel
+.env*

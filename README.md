@@ -1,66 +1,50 @@
-# Adoptable Tails
+# Journey Foundry
 
-Adoptable Tails is a student prototype that helps prospective adopters discover potentially compatible cats and dogs. It uses live pet data, transparent matching rules, and a five-agent AI workflow powered by Claude Haiku 4.5.
+Journey Foundry is an agentic tourism studio for organisations with a visitor-engagement problem. A client completes one briefing; five Claude Haiku 4.5 agents produce and validate one working interactive webpage.
 
-The system recommends animals for further consideration. It does not approve adopters, guarantee compatibility, or replace the judgement of shelters, veterinary professionals, or adopters.
+## Workflow
 
-## Initial scope
+1. **Atlas / Researcher** invokes the Wikidata tool and produces a sourced opportunity diagnosis.
+2. **Mosaic / Designer** selects exactly one product: treasure hunt, personalised itinerary, or interactive timeline, then writes the full specification.
+3. **Forge / Maker** builds self-contained HTML, CSS, and JavaScript from that specification.
+4. **Beacon / Communicator** produces the visitor messaging, touchpoints, launch sequence, and metrics for the implemented product.
+5. **Compass / Manager** audits every handoff, evidence trace, acceptance criterion, safety result, feasibility, and business value; it can approve, request revision, or reject.
 
-- Fictional organisation: Adoptable Tails Ireland
-- Audience: prospective adopters in Ireland
-- Animals: cats and dogs
-- AI provider: Anthropic
-- AI model: Claude Haiku 4.5
-- Primary live-data source: Supabase
-- Optional later data source: RescueGroups
-- Public interface: static, accessible website designed for GitHub Pages
-- Protected backend: hosted Supabase Edge Function
+Each LLM response uses a strict JSON schema. Deterministic gates reject invalid handoffs and unsafe generated code. Research provenance, timestamps, prompt version, and the full run are stored privately in Vercel Blob.
+The public API accepts only the GitHub Pages/local origins and limits each client to five new runs per hour to protect API credit. Each agent is executed as a separate, persisted stage, so a refresh can resume the pipeline and a completed run has a shareable URL.
 
-## Five-agent workflow
+## Architecture
 
-1. **Scout — Researcher:** interprets the adopter questionnaire and retrieves current animal records.
-2. **Harmony — Designer:** converts needs and constraints into a matching strategy.
-3. **PawBuilder — Maker:** applies deterministic rules and produces a ranked shortlist.
-4. **TailTalk — Communicator:** writes clear, responsible explanations.
-5. **ShelterLead — Manager:** validates availability, evidence, welfare constraints, and unsupported claims.
+- Public UI: GitHub Pages
+- API and orchestration: Vercel Functions
+- Run persistence: private Vercel Blob
+- LLM: Anthropic Claude Haiku 4.5 (`claude-haiku-4-5-20251001`)
+- External data: Wikidata API and SPARQL endpoint, invoked by Atlas
+- Generated experience: sandboxed iframe with restrictive Content Security Policy
 
-## Matching principles
+Detailed specifications: [scope](docs/tourism-v2/scope.md), [handoff contracts](docs/tourism-v2/handoff-contracts.md), and [architecture](docs/tourism-v2/architecture.md).
 
-- Explicit welfare conflicts are hard exclusions.
-- Preferences are ranked with deterministic weighted scoring.
-- Missing data remains `unknown`; it is never treated as a positive match.
-- The language model explains structured results but does not independently invent or calculate scores.
-- Every recommendation must be traceable to questionnaire answers and current animal data.
+## Configuration
 
-## Security
+Vercel requires `ANTHROPIC_API_KEY` and the automatically provisioned `BLOB_READ_WRITE_TOKEN`. `config.js` supplies the deployed API URL to GitHub Pages. Never commit secrets.
 
-Never place API keys in browser code or commit them to GitHub. Local secrets belong in `.env`; deployed secrets belong in protected hosting environment settings. Only `.env.example` is committed.
-
-## Status
-
-The project now includes a Supabase schema, a 43-animal fictional Irish seed inventory, a structured questionnaire, and a deterministic matching engine. The final demonstration queries the deployed Supabase database; RescueGroups can be added later without changing the matching workflow.
-
-The five agent definitions and their assessment alignment are documented in
-`docs/agent-designs.md`. The protected `match-agents` Edge Function implements
-the cumulative Scout -> Harmony -> PawBuilder -> TailTalk -> ShelterLead flow.
-Technical failures, corrections, and the first verified baseline run are
-recorded in `docs/iteration-log.md`.
-
-## Local validation
+## Verification
 
 ```bash
-npm test
+npm install
 npm run check
+npm test
+vercel build --yes
 ```
 
-Repeatable agent and customer-journey evaluation is documented in
-`docs/testing-guide.md`. A single live five-agent scenario can be run with
-`npm run evaluate -- apartment-dog`.
+Manual acceptance script:
 
-To preview the public interface, serve the repository root with any static web
-server and open `index.html`. The browser uses only the Supabase publishable key;
-the Anthropic key remains protected in the hosted Edge Function environment.
+1. Submit a complete Dublin museum brief; confirm all five status stages appear and Atlas shows live Wikidata sources.
+2. Confirm the result is exactly one of the three authorised products and its interactions work by mouse and keyboard.
+3. Open “Inspect all five validated handoffs”; confirm the four transitions and code validation are present.
+4. Submit one substantially different brief; confirm the design/product/content change rather than reproducing a template.
+5. Submit an incomplete brief; confirm it cannot proceed. Temporarily use a bad API URL; confirm the UI fails safely without recommendations.
 
-## Academic use
+## Privacy and limitations
 
-This repository is being developed for the Customer Engagement and Artificial Intelligence module at the National College of Ireland. AI-assisted work should be recorded in `docs/ai-usage-log.md` and reviewed by the student before submission.
+The briefing requests no visitor identity. Wikidata provides destination facts, not evidence of audience preferences or business performance. Generated experiences are prototypes and Manager approval is not a guarantee of commercial impact. The previous pet-adoption version remains recoverable from Git history/tag `adoption-v1`.

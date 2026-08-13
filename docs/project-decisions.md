@@ -19,3 +19,18 @@
 - Questionnaire wording and scoring weights
 - Visual identity and interface style
 - Deployment and testing evidence
+## Proposed scope pivot
+
+### 2026-08-13 - Tourism Experience Studio specification
+
+The proposed next version changes the fictional organisation from a pet-adoption
+recommender to an agentic studio serving tourism organisations. Clients submit
+an engagement problem rather than selecting a predetermined deliverable. The
+Designer selects exactly one of three outputs: a treasure hunt, personalised
+itinerary, or interactive timeline. The Maker builds the complete webpage.
+
+The proposed stack is GitHub Pages for the public prototype, Vercel Functions
+for protected orchestration, Vercel Blob for evidence storage, Wikidata as the
+single live external source, and Claude Haiku 4.5 for the five agents. The
+currently published adoption prototype remains unchanged until this
+specification and the five agent context files are reviewed.

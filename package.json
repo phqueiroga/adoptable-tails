@@ -1,14 +1,17 @@
 {
-  "name": "adoptable-tails",
-  "version": "0.1.0",
+  "name": "journey-foundry",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "check": "node --check src/matching.js && node --check src/questionnaire.js && node --check src/evaluation.js && node --check scripts/evaluate-agents.js && node --check app.js",
-    "evaluate": "node scripts/evaluate-agents.js"
+    "check": "node --check src/briefing.js && node --check src/contracts.js && node --check src/code-validator.js && node --check agents/definitions.js && node --check api/lib/storage.js && node --check api/lib/wikidata.js && node --check api/lib/anthropic.js && node --check api/lib/pipeline.js && node --check api/runs.js && node --check app.js"
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "@vercel/blob": "2.8.0",
+    "@vercel/functions": "3.9.3"
   }
 }

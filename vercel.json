@@ -1,0 +1,6 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "outputDirectory": "vercel-public",
+  "functions": { "api/runs.js": { "maxDuration": 300 } },
+  "rewrites": [{ "source": "/api/runs", "destination": "/api/runs.js" }]
+}
