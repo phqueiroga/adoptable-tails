@@ -22,7 +22,7 @@ The public API accepts only the GitHub Pages/local origins and limits each clien
 - External data: Wikidata API and SPARQL endpoint, invoked by Atlas
 - Generated experience: sandboxed iframe with restrictive Content Security Policy
 
-Detailed specifications: [scope](docs/tourism-v2/scope.md), [handoff contracts](docs/tourism-v2/handoff-contracts.md), and [architecture](docs/tourism-v2/architecture.md).
+Detailed specifications: [scope](docs/tourism-v2/scope.md), [handoff contracts](docs/tourism-v2/handoff-contracts.md), [architecture](docs/tourism-v2/architecture.md), and [five-company evaluation](docs/five-company-evaluation.md).
 
 ## Configuration
 
