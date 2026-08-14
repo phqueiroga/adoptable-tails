@@ -75,11 +75,11 @@ export function reconcileToolQueries(output, toolCalls) {
 }
 
 export async function callStructured(agent, input, tracker) {
-  const isMaker=agent.name==="Maker",max_tokens=isMaker?4500:2400;
+  const isMaker=agent.name==="Maker",max_tokens=isMaker?7000:2400;
   const create=(instruction)=>request({model,max_tokens,temperature:0.2,system:agent.system,messages:[{role:"user",content:JSON.stringify({...input,instruction})}],output_config:{format:{type:"json_schema",schema:agent.schema}}},tracker,agent.name);
-  let message=await create(isMaker?"Build a complete but compact prototype. Keep HTML+CSS+JavaScript below 7500 characters total.":"Return a compact complete handoff. Use no more than four short items per array and one short paragraph per scalar field.");
+  let message=await create(isMaker?"Build one complete, compact mobile prototype. Keep HTML+CSS+JavaScript below 12000 characters total and all non-code fields to no more than two short items. Prefer a small working interaction over extra screens or decorative code.":"Return a compact complete handoff. Use no more than four short items per array and one short paragraph per scalar field.");
   try{return{output:parseOutput(message,agent),usage:message.usage,model}}
-  catch(error){if(!(error instanceof Error)||!error.message.endsWith("_TRUNCATED_OUTPUT"))throw error;message=await create(isMaker?"RETRY: your previous output was truncated. Produce a simpler complete prototype with no more than 6500 total code characters. Prioritise working core interaction and accessibility.":"RETRY: produce a shorter complete handoff within the schema.");return{output:parseOutput(message,agent),usage:message.usage,model,retried:true}}
+  catch(error){if(!(error instanceof Error)||!error.message.endsWith("_TRUNCATED_OUTPUT")||isMaker)throw error;message=await create("RETRY: produce a shorter complete handoff within the schema.");return{output:parseOutput(message,agent),usage:message.usage,model,retried:true}}
 }
 
 export async function callResearcherWithTools(agent, briefing, definitions, executor, tracker) {

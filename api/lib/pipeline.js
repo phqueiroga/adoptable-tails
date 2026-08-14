@@ -50,7 +50,7 @@ export async function executeNextStage(run) {
       return run;
     }
     if (run.status === "building") {
-      const input = {briefing: run.briefing, researcher: run.outputs.researcher, designer: run.outputs.designer};
+      const input = {briefing: run.briefing, researcher_evidence: run.outputs.researcher.evidence_items, designer: run.outputs.designer};
       let r, v, code, errors = [];
       for (let attempt = 0; attempt < 2; attempt++) {
         r = await callStructured(agents.maker, attempt === 0 ? input : {
