@@ -1,4 +1,5 @@
 .form-head i.full{width:100%}
+.briefing [hidden]{display:none!important}
 label small{display:block;margin-top:.35rem;color:#55716a;font-weight:400}
 .compact{display:block;border-top:1px solid var(--line);padding-top:1rem;margin-top:1.5rem}
 .compact legend{font:inherit;font-weight:700;margin-bottom:.2rem}
