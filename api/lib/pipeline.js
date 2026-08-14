@@ -58,7 +58,7 @@ export async function executeNextStage(run) {
         r = await callStructured(agents.maker, attempt === 0 ? input : {
           ...input,
           previous_attempt_rejected: errors,
-          correction_instruction: "Rebuild a smaller version from scratch with semantic HTML, CSS and JavaScript. Avoid storage, network requests, parent-window access, Function, eval and inline event attributes.",
+          correction_instruction: "Rebuild a smaller version from scratch with semantic HTML, CSS and JavaScript. Avoid storage, network requests, external links, parent-window access, Function, eval and inline event attributes. Keep {{HERO_ATTRIBUTION}} as unlinked literal text inside small or figcaption; the system adds its safe link later.",
         }, tracker);
         r.output.files = sanitiseMakerFiles(r.output.files);
         v = validateHandoff("maker", r.output, {...run.outputs,media:run.media});
