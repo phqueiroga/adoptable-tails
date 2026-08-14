@@ -5,7 +5,7 @@ import {JSDOM} from "jsdom";
 
 test("a complete form submits, advances and renders the returned run", async () => {
   const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
-  const dom = new JSDOM(html, {url:"https://phqueiroga.github.io/adoptable-tails/", pretendToBeVisual:true});
+  const dom = new JSDOM(html, {url:"https://phqueiroga.github.io/experience-compass/", pretendToBeVisual:true});
   const {window} = dom;
   Object.assign(globalThis, {
     window,

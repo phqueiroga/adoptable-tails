@@ -14,7 +14,7 @@ Strict JSON contracts and deterministic gates reject invalid handoffs and unsafe
 
 ## Architecture
 
-- Public interface: [GitHub Pages](https://phqueiroga.github.io/adoptable-tails/)
+- Public interface: [GitHub Pages](https://phqueiroga.github.io/experience-compass/)
 - API and orchestration: Vercel Functions
 - LLM: Anthropic Claude Haiku 4.5 (`claude-haiku-4-5-20251001`)
 - Required external API: Google Places, used to identify and ground the named attraction
