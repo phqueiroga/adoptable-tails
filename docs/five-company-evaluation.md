@@ -1,39 +1,46 @@
-# Five-company agent evaluation
+# Ten-company end-to-end evaluation
 
-Executed on 13 August 2026 against an isolated Vercel preview using five fictional tourism organisations. Each case used a different engagement problem, audience, constraint set, and desired outcome. The evaluation inspected every agent output, all four handoffs, API evidence, generated code, and the Manager decision.
+Executed on 14 August 2026 against an isolated Vercel preview with three controlled workers. Ten fictional organisations varied organisation type, visitor problem, audience, duration, movement, transport and weather relevance. Each simulation inspected live tool decisions, all agent outputs, handoff validation, generated code and the Manager decision.
 
-## Scenarios and results
+## Results after remediation
 
-| Organisation | Expected challenge | Product selected | First-run outcome |
+| Case | Product | Relevant tools | Final outcome |
 | --- | --- | --- | --- |
-| Dublin Docklands Museum | Explain change across historical periods | Interactive timeline | Revision required |
-| Atlantic Welcome Hotel | Replace generic rainy-day advice | Personalised itinerary | Maker safely blocked prohibited code |
-| Cork Hidden Corners Tours | Lead families to lesser-known stories | Treasure hunt | Approved |
-| Kilkenny Heritage Castle | Clarify the sequence of eras and people | Interactive timeline | Revision required |
-| Atlantic Cliffs Visitor Centre | Plan a short, mobility-aware visit | Personalised itinerary | Revision required |
+| Atlantic Welcome Hotel | Personalised itinerary | Web, Weather, Places, Routes | Revision required |
+| Liffey Business Hotel | Personalised itinerary | Web, Weather, Places, Routes | Revision required |
+| Cork Hidden Corners | Treasure hunt | Web, Places, Routes | Revision required |
+| Wild Atlantic Micro Tours | Personalised itinerary | Web, Weather, Places, Routes | Revision required after Maker repair |
+| Dublin Without a Car | Personalised itinerary | Web, Places, Routes | Revision required |
+| Docklands Memory Museum | Interactive timeline | Web | Approved |
+| Kilkenny Heritage Castle | Interactive timeline | Web, Places | Approved |
+| Phoenix Discovery Park | Personalised itinerary | Web, Weather, Places | Revision required |
+| Atlantic Cliffs Visitor Centre | Personalised itinerary | Web, Places | Revision required after state-read repair |
+| Galway Story House | Interactive timeline | Web | Four handoffs and valid code; final Manager call blocked by exhausted API credit |
 
-The three permitted product categories were all selected. This demonstrates that the Designer responds to the problem rather than returning one fixed template. A revision-required result is not automatically a failure: the Manager is expected to withhold approval whenever acceptance, accessibility, evidence, or feasibility checks are not satisfied.
+The Designer selected all three authorised product categories. Fixed historical-sequence problems produced timelines; family discovery produced a treasure hunt; time, movement and weather problems generally produced itineraries. Weather and Routes were omitted—with explicit reasons—when the experience was stationary or indoors.
 
-## Validation by agent
+## Agent validation
 
-| Agent | What was inspected | Result |
-| --- | --- | --- |
-| Researcher | Real Wikidata tool call, at least three sourced evidence items, source URLs, and explicit unknowns | Passed in all five cases; 11–15 entities returned per case |
-| Designer | One authorised product, problem-to-product rationale, acceptance criteria, and evidence IDs traceable to Researcher output | Product choice varied correctly; an evidence-ID gap was discovered and fixed |
-| Maker | Product category preserved, build marked ready, HTML/CSS/JS safety validation, and acceptance checks | Four initial builds completed; one unsafe construct was correctly blocked and then fixed on retry |
-| Communicator | Ready-to-use copy, launch touchpoints, measurable engagement metrics, and communication risks | Passed in every completed first run |
-| Manager | Audit checks, issue list, evidence-based decision, and no automatic approval | One approval and three justified revision requests; the interrupted case completed after repair and received a justified revision request |
-| Handoffs | Researcher → Designer → Maker → Communicator → Manager | Four persisted handoffs in every completed pipeline |
+| Agent | Evidence from the evaluation |
+| --- | --- |
+| Researcher | All ten produced sourced evidence and explicit tool decisions. Movement cases called Routes after the prompt correction. Executed custom calls are now reconciled into the permanent query record. |
+| Designer | Every selected product was authorised and every required evidence ID traced to Researcher output. Product selection varied with the problem. |
+| Maker | Safe code validation remained mandatory. Two initial failures exposed browser-storage and empty-file behavior; stronger focused rebuilds repaired both without weakening the safety gate. |
+| Communicator | Completed for every run that reached it and was evaluated against actual Maker features rather than the design idea alone. |
+| Manager | Two clean cases were approved; the others received justified revisions when acceptance or launch checks failed. It did not approve everything automatically. |
+| Handoffs | Nine cases reached and persisted all four handoffs. The tenth also reached four valid handoffs, but its final Manager API call was blocked by depleted Anthropic credit. |
 
-## Gaps found and corrections
+## Gaps found and fixed
 
-1. The Designer occasionally cited Wikidata IDs that were not present in the Researcher's evidence list. The prompt now restricts citations to supplied evidence IDs, and the handoff contract rejects any untraceable ID.
-2. One Maker response used the JavaScript `Function` constructor. The safety gate correctly stopped it. The Maker instructions now explicitly prohibit `eval`, `Function`, and `new Function`.
-3. The affected hotel run was resumed after the correction. It preserved the personalised-itinerary design, generated valid code, completed all four handoffs, and reached Manager review.
-4. Automated contract tests now include rejection of an invented evidence ID.
+1. **Researcher tool-turn exhaustion:** five consecutive tool turns could leave no final JSON. The orchestration now forces a tool-free structured response after the limit.
+2. **Route responsibility:** one Researcher deferred routing to the Designer. Its instructions now explicitly require representative route validation whenever movement is allowed.
+3. **Missing audit entries:** the model could execute Routes but omit it from `source_queries`. Executed tool calls are now deterministically reconciled into the audit.
+4. **False-positive code rules:** ordinary `function (...)` syntax and harmless “parent” wording were blocked. Rules now target the actual `Function` constructor and real parent-window access, with regression tests preserving both security controls.
+5. **Maker correction weakness:** a rebuild could repeat browser storage or return empty files. Maker now receives the exact failures and up to two focused rebuilds requiring non-empty semantic files and memory-only state.
+6. **Stale stage state:** overwritten private Blob content could remain cached for up to 60 seconds, causing duplicate work and an incomplete evaluator loop. Reads now use Vercel Blob's `useCache: false` consistent-read option.
 
-## Repeat procedure
+## Interpretation
 
-Run `node scripts/run-five-company-eval.js` against a test deployment. The script creates the five briefs, advances each stage, and emits a JSON audit containing the result for every agent. It should be used on a preview deployment because it consumes LLM credit and creates stored evaluation runs.
+`revision_required` is a valid quality-control outcome, not a pipeline failure. It proves the Manager checks acceptance criteria and launch readiness. The two approvals demonstrate the full public experience path. The principal remaining operational risk is latency: five sequential model stages plus live research can take several minutes. The system displays progress, persists every stage and fails safely rather than showing partial work.
 
-Pass criteria: Researcher uses live sourced data; Designer cites only Researcher evidence; Maker preserves the chosen category and passes code safety; Communicator supplies usable copy and metrics; Manager makes an evidence-based decision; and all four handoffs are stored. Any gate failure is recorded as a finding, corrected, and rerun rather than hidden.
+Run IDs are retained in private Vercel Blob; no API keys or visitor identities are stored in this report.

@@ -1,93 +1,44 @@
-# Tourism Version - Technical Architecture
+# Experience Compass architecture
 
 ```text
 GitHub Pages
-briefing form, pipeline evidence, approved experience preview
+briefing form, progress, evidence, approved experience
         |
-        | HTTPS
         v
 Vercel Functions
-validation, orchestration, rate limiting, secret protection
+input validation, rate limit, orchestration, safety gates
         |
-        +---- Researcher tool call ----> Wikidata SPARQL API
+        +-- Researcher --> Anthropic web search
+        |              --> Google Places
+        |              --> Open-Meteo when weather matters
+        |              --> Google Routes when movement is allowed
         |
-        +---- five sequential calls ---> Claude Haiku 4.5
+        +-- five ordered Claude Haiku 4.5 agent calls
         |
-        +---- run evidence ------------> Vercel Blob (JSON/code bundle)
+        +-- private run evidence --> Vercel Blob (consistent reads)
         |
         v
-status/result API
-        |
-        v
-GitHub Pages renders validated Maker files in a restricted preview
+GitHub Pages renders approved Maker files in a sandboxed iframe
 ```
 
-## Component responsibilities
+## Responsibilities
 
-### GitHub Pages
+- **GitHub Pages:** collects the scoped organisation briefing, starts/resumes a run, shows validated evidence and renders only approved experiences. It contains no secrets.
+- **Vercel Functions:** holds API keys, validates input and handoffs, exposes controlled external tools, scans generated code, limits public run creation and returns public-safe results.
+- **Research tools:** web search supplies contextual evidence; Places supplies current place metadata; Open-Meteo supplies current/forecast weather; Routes supplies distance and duration. The Researcher chooses relevant tools and records calls and omissions.
+- **Vercel Blob:** privately stores briefings, tool evidence, agent outputs, validations and generated files. `useCache: false` is required because the same run record changes after every stage.
 
-- collects the organisation briefing;
-- starts a run and polls by run ID;
-- shows the five cumulative handoffs;
-- displays validation and Manager decision;
-- previews the Maker's approved webpage;
-- contains no Claude or storage credentials.
+## Maker security boundary
 
-### Vercel Functions
+The Maker creates semantic HTML, CSS and JavaScript. Deterministic validation rejects external scripts, network requests, browser storage, cookies, parent-window access, navigation, device permissions, `eval`, the `Function` constructor, inline event handlers and external form actions. The approved files run with a restrictive Content Security Policy inside an iframe sandbox. This engine is a safeguard, not a sixth agent.
 
-- validate and limit public inputs;
-- expose the Researcher's controlled Wikidata tool;
-- orchestrate the five agents in mandatory order;
-- validate every structured handoff;
-- scan Maker files against the permitted-code policy;
-- store and retrieve run evidence;
-- return only public-safe results.
+## Evidence retained per run
 
-### Wikidata
+- run ID, timestamps, prompt version and original briefing;
+- Researcher tool decisions, exact custom tool inputs/results and source links;
+- structured output for each agent;
+- four validated handoffs;
+- Maker safety result and acceptance checks;
+- Manager decision, issues and launch conditions.
 
-- is the single live external tourism source;
-- is queried at run time by the Researcher through a recorded tool call;
-- returns entity IDs, factual properties, relationships, coordinates when
-  available, and source links;
-- is never copied into prompts as a hardcoded destination dataset.
-
-### Vercel Blob
-
-- stores run metadata, Wikidata query evidence, agent outputs, validation
-  results, and Maker files;
-- supports assignment screenshots, transcripts, and before/after comparisons;
-- is not the external research source.
-
-## Maker code policy
-
-The Maker creates HTML, CSS, and client-side JavaScript, but the system rejects:
-
-- external scripts, dynamic imports, or unapproved network requests;
-- access to cookies, local credentials, parent-page DOM, camera, microphone, or
-  geolocation;
-- form submission to external destinations;
-- `eval`, `Function`, inline event-handler attributes, and navigation outside
-  the approved experience;
-- hidden or obfuscated code.
-
-The preview is rendered with restrictive browser permissions. This validator
-and preview environment are deterministic safeguards, not a sixth agent.
-
-## Version 1 deployment boundary
-
-The GitHub Pages URL is the single public prototype URL. Generated experiences
-are shown within that application and are not independently deployed. This
-keeps publication, security, and the assignment's eight-week availability
-requirement manageable.
-
-## Evidence required per run
-
-- run ID and timestamps;
-- original client briefing;
-- exact Wikidata query and retrieval timestamp;
-- returned entity IDs and source links;
-- input and output for every agent;
-- handoff-schema validation;
-- Maker code-validation and interaction-test results;
-- Manager decision and reasons;
-- model and prompt version identifiers.
+The public URL is the GitHub Pages application. Generated experiences are independent webpages inside its isolated result area, but are not separately deployed URLs.

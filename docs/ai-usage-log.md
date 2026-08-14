@@ -3,10 +3,10 @@
 ## Tourism v2 pivot (August 2026)
 
 - Claude Haiku 4.5 is used by five distinct agents with strict structured-output contracts.
-- Atlas is forced to invoke the Wikimedia/Wikidata research tool; raw IDs, source URLs, query and timestamp are preserved.
-- Forge outputs original HTML/CSS/JavaScript. Deterministic sanitisation, validation, CSP and iframe sandboxing are applied before display.
-- Live acceptance run `e994182a-ae38-43f7-b988-eef1d4807aa9` completed all four handoffs and was approved by Compass with zero issues.
-- Iteration findings fixed during live testing: invalid secret marker, Wikidata timeout, background-function termination, insufficient evidence, truncated Maker JSON, unsafe inline/external content, and long-stage recovery.
+- The Researcher chooses among Anthropic web search, Google Places, Open-Meteo and Google Routes; source URLs, exact custom tool calls and timestamps are preserved.
+- The Maker outputs original HTML/CSS/JavaScript. Deterministic sanitisation, validation, CSP and iframe sandboxing are applied before display.
+- Ten varied live simulations produced all three product categories, two approvals, justified revision decisions and concrete failure/remediation evidence.
+- Iteration findings fixed during live testing include tool-turn exhaustion, missing route responsibility, incomplete query auditing, false-positive code validation, repeated unsafe Maker patterns and stale Vercel Blob reads.
 
 Record material AI-assisted work here for academic transparency. Review and correct every output before using it in the submission.
 

@@ -18,7 +18,8 @@ Every submission must contain the following fields.
 | Field | Purpose |
 |---|---|
 | `organisation_name` | Identifies the fictional or real client |
-| `organisation_type` | Museum, hotel, attraction, tour operator, DMO, or cultural venue |
+| `organisation_type` | Hotel, tourism agency, or attraction |
+| `attraction_type` | Museum, heritage site, park, visitor centre, or cultural venue when organisation type is attraction |
 | `destination` | City, region, venue, or bounded visitor area |
 | `engagement_problem` | The current customer problem to solve |
 | `target_audience` | Visitor segment and relevant characteristics |
@@ -31,6 +32,9 @@ Every submission must contain the following fields.
 | `constraints` | Geographic, operational, safety, budget, or content boundaries |
 | `desired_tone` | For example playful, reflective, educational, or adventurous |
 | `success_indicator` | Completion, dwell time, discovery, return visit, or another measure |
+| `movement_allowed` | Whether the experience may involve movement between places |
+| `starting_point` | Required when movement is allowed |
+| `transport_modes` | Walking, public transport, and/or driving when movement is allowed |
 
 No personal or sensitive visitor information is required.
 
@@ -78,9 +82,11 @@ The finished webpage contains:
 
 ## Scope boundaries
 
-- Wikidata is the single live external source in version 1.
-- A Wikidata fact is evidence about a place or event, not proof of visitor
-  behaviour or business performance.
+- The Researcher may use Anthropic web search, Google Places, Open-Meteo and
+  Google Routes. It must call only sources relevant to the engagement problem
+  and explain both calls and omissions.
+- External facts are evidence about context, places, weather or travel, not
+  proof of visitor behaviour or business performance.
 - The product must expose sources and unknowns rather than invent missing facts.
 - The Maker creates the complete HTML, CSS, and JavaScript experience.
 - Generated code is validated and displayed within the GitHub Pages application;

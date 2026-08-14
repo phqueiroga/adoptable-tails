@@ -1,11 +1,12 @@
 {
-  "name": "journey-foundry",
+  "name": "experience-compass",
   "version": "2.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "check": "node --check src/briefing.js && node --check src/contracts.js && node --check src/code-validator.js && node --check agents/definitions.js && node --check api/lib/storage.js && node --check api/lib/wikidata.js && node --check api/lib/anthropic.js && node --check api/lib/pipeline.js && node --check api/runs.js && node --check app.js"
+    "check": "node --check src/briefing.js && node --check src/contracts.js && node --check src/code-validator.js && node --check agents/definitions.js && node --check api/lib/storage.js && node --check api/lib/external-tools.js && node --check api/lib/anthropic.js && node --check api/lib/pipeline.js && node --check api/runs.js && node --check app.js && node --check scripts/run-ten-company-eval.js && node --check scripts/retry-eval-runs.js",
+    "eval:ten": "node scripts/run-ten-company-eval.js"
   },
   "engines": {
     "node": ">=20"

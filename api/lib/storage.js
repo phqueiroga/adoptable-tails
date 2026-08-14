@@ -13,7 +13,7 @@ export async function saveRun(run) {
 
 export async function loadRun(id) {
   if (process.env.BLOB_READ_WRITE_TOKEN) {
-    const result = await get(pathFor(id), { access: "private" });
+    const result = await get(pathFor(id), { access: "private", useCache: false });
     if (result?.statusCode === 200) return JSON.parse(await new Response(result.stream).text());
   }
   return memory.get(id) ?? null;
@@ -25,7 +25,7 @@ export async function consumeRateLimit(clientId, maximum = 5) {
   const key = `limits/${hour}/${digest}.json`;
   let count = 0;
   if (process.env.BLOB_READ_WRITE_TOKEN) {
-    const current = await get(key, { access: "private" });
+    const current = await get(key, { access: "private", useCache: false });
     if (current?.statusCode === 200) count = Number(JSON.parse(await new Response(current.stream).text()).count) || 0;
     if (count >= maximum) return false;
     await put(key, JSON.stringify({ count: count + 1, hour }), { access: "private", contentType: "application/json", allowOverwrite: true, cacheControlMaxAge: 60 });
