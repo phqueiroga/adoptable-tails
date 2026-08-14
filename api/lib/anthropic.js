@@ -69,9 +69,8 @@ function parseOutput(message, agent) {
 }
 
 export function reconcileToolQueries(output, toolCalls) {
-  const recorded=new Set((output.source_queries??[]).map(query=>query.source_query_id));
   output.source_queries??=[];
-  for(const call of toolCalls){if(recorded.has(call.id))continue;output.source_queries.push({source_query_id:call.id,tool:call.name,query:call.result?.query??JSON.stringify(call.input),queried_at:call.result?.queried_at??new Date().toISOString(),result_count:Number(call.result?.result_count) || 0});recorded.add(call.id)}
+  for(const call of toolCalls){const canonical={source_query_id:call.id,tool:call.name,query:call.result?.query??JSON.stringify(call.input),queried_at:call.result?.queried_at??new Date().toISOString(),result_count:Number(call.result?.result_count) || 0},index=output.source_queries.findIndex(query=>query.source_query_id===call.id);if(index>=0)output.source_queries[index]={...output.source_queries[index],...canonical};else output.source_queries.push(canonical)}
   return output;
 }
 
