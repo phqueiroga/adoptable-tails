@@ -1,101 +1,49 @@
-# Tourism Experience Studio - Scope Specification
+# Experience Compass — attraction scope
 
-## Organisation and customer
+## Client and problem
 
-The product is an agentic digital studio for tourism organisations. Its clients
-are museums, hotels, attractions, tour operators, destination organisations,
-and cultural venues that have a customer-engagement problem but do not yet
-know which digital experience would best address it.
-
-The client supplies the problem, audience, objective, context, and constraints.
-The client does **not** select the final product category. The Designer makes
-that decision using the Researcher's live evidence.
+Experience Compass serves visitor attractions: museums, parks, heritage sites, visitor centres and cultural venues. The attraction supplies its visitor-engagement problem and real content. The agents decide how to transform it; the client does not select the product.
 
 ## Client briefing
 
-Every submission must contain the following fields.
-
 | Field | Purpose |
 |---|---|
-| `organisation_name` | Identifies the fictional or real client |
-| `organisation_type` | Hotel, tourism agency, or attraction |
-| `attraction_type` | Museum, heritage site, park, visitor centre, or cultural venue when organisation type is attraction |
-| `destination` | City, region, venue, or bounded visitor area |
-| `engagement_problem` | The current customer problem to solve |
-| `target_audience` | Visitor segment and relevant characteristics |
-| `business_objective` | Desired organisational outcome |
-| `visitor_outcome` | Desired value for the visitor |
-| `desired_duration_minutes` | Expected experience length |
-| `priority_interests` | Themes such as history, architecture, food, or culture |
-| `accessibility_requirements` | Mobility, language, sensory, cognitive, or device needs |
-| `available_resources` | Staff, signage, QR codes, venue access, or existing content |
-| `constraints` | Geographic, operational, safety, budget, or content boundaries |
-| `desired_tone` | For example playful, reflective, educational, or adventurous |
-| `success_indicator` | Completion, dwell time, discovery, return visit, or another measure |
-| `movement_allowed` | Whether the experience may involve movement between places |
-| `starting_point` | Required when movement is allowed |
-| `transport_modes` | Walking, public transport, and/or driving when movement is allowed |
+| `organisation_name` | Attraction name |
+| `attraction_type` | Museum, park, heritage site, visitor centre, cultural venue or other |
+| `destination` | Attraction location |
+| `engagement_problem` | What visitors currently miss or misunderstand |
+| `target_audience` | Intended visitor segment |
+| `existing_content` | Real stories, objects, events or areas available for use |
+| `visitor_outcome` | What visitors should experience or learn |
+| `resources_and_constraints` | Resources, accessibility needs and restrictions |
+| `desired_duration_minutes` | Expected length |
+| `desired_tone` | Intended emotional and editorial tone |
 
-No personal or sensitive visitor information is required.
+No visitor identity or sensitive data is required.
 
 ## Permitted products
 
-The Designer must select exactly one product. The Maker must build only the
-selected product and may not silently switch categories.
+The Designer selects exactly one and the Maker may not change it.
 
-### 1. Game - Treasure hunt
+### Treasure hunt
 
-The finished webpage contains:
+- Evidence-backed clues or challenges connected to supplied attraction content
+- Clear mission, feedback, progress and completion
+- Accessible alternative where a physical interaction is unsuitable
 
-- a clear mission and narrative premise;
-- 3-7 evidence-backed stages associated with real places or subjects;
-- a challenge, optional hint, response mechanism, and feedback at each stage;
-- progress and completion states;
-- a final outcome connected to the client's engagement objective;
-- accessible alternatives when physical movement or a specific interaction is
-  not suitable.
+### Interactive timeline
 
-### 2. Exploration - Personalised itinerary
+- Sourced events in chronological order
+- Connections between people, objects, places and events
+- User-controlled exploration, narrative introduction and conclusion
+- Accessible keyboard and mobile interaction
 
-The finished webpage contains:
+## External API
 
-- a short visitor preference input inside the experience;
-- a generated or selectable sequence of 3-6 evidence-backed stops;
-- reasons each stop suits the selected interests and available time;
-- estimated experience duration and a clear sequence;
-- alternative stops or paths when appropriate;
-- a completion state and relevant next action.
+Google Places is the sole custom external API. The Researcher searches for the named attraction and may retrieve its official name, address, category, coordinates, opening-hour data, ratings and accessibility fields. These fields ground the organisation but do not prove visitor behaviour or historical claims.
 
-The prototype is an itinerary experience, not a turn-by-turn navigation or
-transport-booking service.
-
-### 3. Storytelling - Interactive timeline
-
-The finished webpage contains:
-
-- 5-10 sourced events in chronological order;
-- meaningful connections between people, places, and events;
-- expandable detail or another form of user-controlled exploration;
-- a narrative introduction and conclusion;
-- at least one comparison, theme, or interpretive thread;
-- accessible keyboard and mobile interaction.
-
-## Scope boundaries
-
-- The Researcher may use Anthropic web search, Google Places, Open-Meteo and
-  Google Routes. It must call only sources relevant to the engagement problem
-  and explain both calls and omissions.
-- External facts are evidence about context, places, weather or travel, not
-  proof of visitor behaviour or business performance.
-- The product must expose sources and unknowns rather than invent missing facts.
-- The Maker creates the complete HTML, CSS, and JavaScript experience.
-- Generated code is validated and displayed within the GitHub Pages application;
-  version 1 does not create a separate public URL for every generated experience.
-- The system does not make bookings, collect payments, track precise visitor
-  locations, or provide safety-critical navigation.
+Anthropic web search may add historical or cultural evidence when relevant. The system does not use weather, routing, transport or itinerary APIs.
 
 ## Success definition
 
-A successful run produces one working, sourced, accessible web experience that
-responds to the original engagement problem, plus a launch strategy and a
-Manager decision supported by recorded handoff evidence.
+A successful run produces one sourced, accessible and working treasure hunt or interactive timeline, plus a launch plan and Manager decision supported by five validated handoffs.

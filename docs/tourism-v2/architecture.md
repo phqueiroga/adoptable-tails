@@ -8,10 +8,8 @@ briefing form, progress, evidence, approved experience
 Vercel Functions
 input validation, rate limit, orchestration, safety gates
         |
-        +-- Researcher --> Anthropic web search
-        |              --> Google Places
-        |              --> Open-Meteo when weather matters
-        |              --> Google Routes when movement is allowed
+        +-- Researcher --> Google Places (required attraction grounding)
+        |              --> Anthropic web search (relevant context only)
         |
         +-- five ordered Claude Haiku 4.5 agent calls
         |
@@ -25,7 +23,7 @@ GitHub Pages renders approved Maker files in a sandboxed iframe
 
 - **GitHub Pages:** collects the scoped organisation briefing, starts/resumes a run, shows validated evidence and renders only approved experiences. It contains no secrets.
 - **Vercel Functions:** holds API keys, validates input and handoffs, exposes controlled external tools, scans generated code, limits public run creation and returns public-safe results.
-- **Research tools:** web search supplies contextual evidence; Places supplies current place metadata; Open-Meteo supplies current/forecast weather; Routes supplies distance and duration. The Researcher chooses relevant tools and records calls and omissions.
+- **Research tools:** Google Places identifies and grounds the named attraction in current place metadata. Web search supplies relevant historical or cultural context. The Researcher records all calls and unknowns.
 - **Vercel Blob:** privately stores briefings, tool evidence, agent outputs, validations and generated files. `useCache: false` is required because the same run record changes after every stage.
 
 ## Maker security boundary

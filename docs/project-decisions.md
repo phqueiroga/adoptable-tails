@@ -35,14 +35,12 @@ Anthropic web search for context, Google Places and Routes for current place
 and travel evidence, Open-Meteo for relevant weather, and Claude Haiku 4.5 for
 the five agents. The pet-adoption version remains recoverable from Git history.
 
-### 2026-08-14 - Confirmed Experience Compass scope
+### 2026-08-14 - Simplified Experience Compass scope
 
-- Client types are Hotel, Tourism agency, and Attraction; attractions use a
-  bounded subtype list.
-- The client states whether movement is allowed and, when relevant, supplies a
-  starting point and one or more permitted transport modes.
-- The Researcher chooses APIs according to the problem and must test a route
-  when movement is allowed.
-- The Designer selects exactly one category; the Maker builds the complete
-  specific webpage; the Communicator launches the implemented product; the
-  Manager may approve, require revision, or reject.
+- Clients are visitor attractions only, using a bounded attraction subtype list.
+- The attraction supplies its real stories, objects, events or areas.
+- The Designer chooses either a treasure hunt or an interactive timeline.
+- Google Places is the sole custom external API and grounds the named attraction.
+- Weather, routes, transport questions and personalised itineraries are removed.
+- The Maker builds the complete specific webpage; the Communicator launches it;
+  the Manager may approve, require revision or reject.

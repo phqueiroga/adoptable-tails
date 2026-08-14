@@ -9,9 +9,13 @@ const terminal = new Set(["approved", "revision_required", "rejected", "failed"]
 const makerSummary = (maker = {}) => ({
   product_type: maker.product_type,
   product_title: maker.product_title,
-  build_summary: maker.build_summary,
-  interactions: maker.interactions,
-  accessibility_notes: maker.accessibility_notes,
+  implementation_summary: maker.implementation_summary,
+  implemented_features: maker.implemented_features,
+  evidence_trace: maker.evidence_trace,
+  usage_instructions: maker.usage_instructions,
+  acceptance_check: maker.acceptance_check,
+  known_limitations: maker.known_limitations,
+  build_status: maker.build_status,
 });
 
 export async function executeNextStage(run) {

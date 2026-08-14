@@ -1,4 +1,4 @@
-export const productTypes = ["treasure_hunt", "personalised_itinerary", "interactive_timeline"];
+export const productTypes = ["treasure_hunt", "interactive_timeline"];
 export const agentOrder = ["researcher", "designer", "maker", "communicator", "manager"];
 
 const required = {
@@ -15,6 +15,7 @@ export function validateHandoff(stage, output, cumulative = {}) {
   for (const field of required[stage] ?? []) if (!(field in output)) errors.push(`${stage}.${field} is required`);
   if (stage === "researcher") {
     if (!output.source_queries?.some((query) => query.source_query_id&&query.tool&&query.queried_at&&query.result_count>=0)) errors.push("Researcher must record a live external query");
+    if (!output.source_queries?.some((query) => query.tool === "search_places")) errors.push("Researcher must ground the attraction with Google Places");
     if ((output.evidence_items?.length ?? 0) < 2) errors.push("Researcher requires at least two evidence items");
     const queryIds=new Set(output.source_queries?.map(query=>query.source_query_id)??[]);
     if (!output.evidence_items?.every((item) => item.entity_id&&item.source_url&&queryIds.has(item.source_query_id))) errors.push("Every evidence item must trace to a recorded source query");

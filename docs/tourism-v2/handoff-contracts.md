@@ -15,12 +15,12 @@ original briefing and the complete cumulative handoff relevant to their review.
 ### Receives
 
 - validated client briefing;
-- access to the `search_wikidata` tool;
+- access to Google Places and contextual web search;
 - research limits: destination, themes, audience, and permitted claims.
 
 ### Must do
 
-- invoke `search_wikidata` during the run rather than receive prefetched data;
+- invoke Google Places to identify and ground the named attraction;
 - diagnose the engagement opportunity;
 - evaluate relevance and coverage of returned entities;
 - separate sourced facts, interpretations, gaps, and assumptions.
@@ -51,7 +51,7 @@ source URLs for factual claims, and an explicit unknowns list.
 
 - client briefing;
 - complete Researcher output and source references;
-- definitions and boundaries of the three permitted products.
+- definitions and boundaries of the two permitted products.
 
 ### Must do
 
@@ -63,7 +63,7 @@ source URLs for factual claims, and an explicit unknowns list.
 ### Delivers to Maker
 
 ```text
-selected_product { treasure_hunt | personalised_itinerary | interactive_timeline }
+selected_product { treasure_hunt | interactive_timeline }
 selection_rationale
 design_goal
 experience_concept
