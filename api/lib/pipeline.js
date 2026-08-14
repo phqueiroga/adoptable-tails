@@ -76,7 +76,7 @@ export async function executeNextStage(run) {
       return run;
     }
     if (run.status === "communicating") {
-      const r = await callStructured(agents.communicator, {briefing: run.briefing, designer: run.outputs.designer, maker: makerSummary(run.outputs.maker)}, tracker);
+      const r = await callStructured(agents.communicator, {briefing: run.briefing, reward_strategy:run.outputs.designer.reward_strategy, designer: run.outputs.designer, maker: makerSummary(run.outputs.maker)}, tracker);
       const v = validateHandoff("communicator", r.output, run.outputs);
       if (!v.valid) throw new Error(`COMMUNICATOR_CONTRACT:${v.errors.join("|")}`);
       run.outputs.communicator = r.output;
