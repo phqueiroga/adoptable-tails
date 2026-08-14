@@ -4,7 +4,7 @@ import { validateBriefing, normaliseBriefing } from "../src/briefing.js";
 import { validateHandoff } from "../src/contracts.js";
 import { sanitiseMakerFiles, validateMakerFiles, makeSrcdoc } from "../src/code-validator.js";
 import { consumeRateLimit } from "../api/lib/storage.js";
-import { reconcileToolQueries } from "../api/lib/anthropic.js";
+import { createUsageTracker, estimateHaikuCost, reconcileToolQueries } from "../api/lib/anthropic.js";
 
 const briefing={organisation_name:"Harbour Museum",organisation_type:"attraction",attraction_type:"museum",destination:"Dublin, Ireland",engagement_problem:"Visitors miss local stories and leave quickly.",target_audience:"International adults and families",visitor_outcome:"Discover and understand lesser-known stories",resources_and_constraints:"QR codes and staff; free and mobile-first",desired_duration_minutes:45,desired_tone:"Curious and welcoming",movement_allowed:"no",transport_modes:[]};
 
@@ -19,3 +19,5 @@ test("validator distinguishes ordinary wording from dangerous constructors and p
 test("live weather or route requests cannot be embedded in Maker output",()=>{const files={html:"<main><h1>Plan</h1></main>",css:"",javascript:"fetch('https://api.open-meteo.com').then(()=>{})"};const result=validateMakerFiles(files);assert.equal(result.valid,false);assert.ok(result.errors.includes("network requests are forbidden"))});
 test("rate limiter allows five starts and blocks the sixth",async()=>{const id=`test-${Date.now()}`;for(let i=0;i<5;i++)assert.equal(await consumeRateLimit(id),true);assert.equal(await consumeRateLimit(id),false)});
 test("sanitiser removes external and inline executable content",()=>{const clean=sanitiseMakerFiles({html:'<link href="https://x"><main><h1>X</h1><button onclick="bad()">Go</button><iframe src="https://x"></iframe></main>',css:'@import "https://x";',javascript:""});assert.equal(validateMakerFiles(clean).valid,true);assert.doesNotMatch(clean.html,/onclick|iframe|link/i)});
+test("Claude usage is costed and attributed per agent",()=>{const tracker=createUsageTracker({}, {max_calls:2,max_estimated_cost_usd:1});tracker.beforeCall();tracker.record("Designer",{input_tokens:1000,output_tokens:200});assert.equal(tracker.state.calls,1);assert.equal(tracker.state.agents.Designer.output_tokens,200);assert.equal(tracker.state.estimated_cost_usd,0.002);assert.equal(estimateHaikuCost({input_tokens:1000,output_tokens:200}),0.002)});
+test("Claude usage tracker enforces both safety ceilings",()=>{const calls=createUsageTracker({calls:2},{max_calls:2,max_estimated_cost_usd:1});assert.throws(()=>calls.beforeCall(),/RUN_BUDGET_CALL_LIMIT/);const cost=createUsageTracker({estimated_cost_usd:0.2},{max_calls:9,max_estimated_cost_usd:0.2});assert.throws(()=>cost.beforeCall(),/RUN_BUDGET_COST_LIMIT/)});
