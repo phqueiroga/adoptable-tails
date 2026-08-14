@@ -17,6 +17,7 @@ const makerSummary = (maker = {}) => ({
   known_limitations: maker.known_limitations,
   build_status: maker.build_status,
 });
+export const heroMedia=(toolCalls=[])=>{for(const call of toolCalls){const place=call.result?.results?.find(item=>item.photo);if(place)return{hero_photo:{...place.photo,place_id:place.place_id,place_name:place.label}}}return{hero_photo:null}};
 
 export async function executeNextStage(run) {
   if (terminal.has(run.status)) return run;
@@ -34,13 +35,14 @@ export async function executeNextStage(run) {
       if (!v.valid) throw new Error(`RESEARCHER_CONTRACT:${v.errors.join("|")}`);
       run.tool_calls = r.tool_calls;
       run.outputs.researcher = r.output;
+      run.media = heroMedia(r.tool_calls);
       run.handoffs.push({from: "researcher", to: "designer", validated: true, at: new Date().toISOString()});
       run.status = "designing";
       await saveRun(run);
       return run;
     }
     if (run.status === "designing") {
-      const r = await callStructured(agents.designer, {briefing: run.briefing, researcher: run.outputs.researcher}, tracker);
+      const r = await callStructured(agents.designer, {briefing: run.briefing, researcher: run.outputs.researcher, available_media:run.media}, tracker);
       const v = validateHandoff("designer", r.output, run.outputs);
       if (!v.valid) throw new Error(`DESIGNER_CONTRACT:${v.errors.join("|")}`);
       run.outputs.designer = r.output;
@@ -50,7 +52,7 @@ export async function executeNextStage(run) {
       return run;
     }
     if (run.status === "building") {
-      const input = {briefing: run.briefing, researcher_evidence: run.outputs.researcher.evidence_items, designer: run.outputs.designer};
+      const input = {briefing: run.briefing, researcher_evidence: run.outputs.researcher.evidence_items, available_media:run.media, designer: run.outputs.designer};
       let r, v, code, errors = [];
       for (let attempt = 0; attempt < 2; attempt++) {
         r = await callStructured(agents.maker, attempt === 0 ? input : {
@@ -59,7 +61,7 @@ export async function executeNextStage(run) {
           correction_instruction: "Rebuild a smaller version from scratch with semantic HTML, CSS and JavaScript. Avoid storage, network requests, parent-window access, Function, eval and inline event attributes.",
         }, tracker);
         r.output.files = sanitiseMakerFiles(r.output.files);
-        v = validateHandoff("maker", r.output, run.outputs);
+        v = validateHandoff("maker", r.output, {...run.outputs,media:run.media});
         code = validateMakerFiles(r.output.files);
         errors = [...v.errors, ...code.errors];
         if (!errors.length) break;
@@ -84,7 +86,7 @@ export async function executeNextStage(run) {
       return run;
     }
     if (run.status === "reviewing") {
-      const r = await callStructured(agents.manager, {briefing: run.briefing, tool_calls: run.tool_calls, researcher:{research_brief:run.outputs.researcher.research_brief,evidence_items:run.outputs.researcher.evidence_items}, designer: run.outputs.designer, maker: makerSummary(run.outputs.maker), code_validation: run.validations.code, communicator: run.outputs.communicator, handoffs: run.handoffs}, tracker);
+      const r = await callStructured(agents.manager, {briefing: run.briefing, tool_calls: run.tool_calls, available_media:run.media, researcher:{research_brief:run.outputs.researcher.research_brief,evidence_items:run.outputs.researcher.evidence_items}, designer: run.outputs.designer, maker: makerSummary(run.outputs.maker), code_validation: run.validations.code, communicator: run.outputs.communicator, handoffs: run.handoffs}, tracker);
       const v = validateHandoff("manager", r.output, run.outputs);
       if (!v.valid) throw new Error(`MANAGER_CONTRACT:${v.errors.join("|")}`);
       run.outputs.manager = r.output;

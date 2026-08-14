@@ -29,6 +29,8 @@ export function validateHandoff(stage, output, cumulative = {}) {
     if (output.product_type !== cumulative.designer?.selected_product) errors.push("Maker changed the selected product");
     if (!output.files?.html || !output.files?.css || !output.files?.javascript) errors.push("Maker must deliver HTML, CSS and JavaScript");
     if (output.build_status !== "ready") errors.push("Maker build is not ready");
+    if (cumulative.media?.hero_photo && (!output.files?.html?.includes("{{HERO_IMAGE}}") || !output.files?.html?.includes("{{HERO_ATTRIBUTION}}"))) errors.push("Maker must place the supplied hero image and attribution tokens");
+    if (!/<header[\s>]/i.test(output.files?.html||"") || ((output.files?.html||"").match(/<section[\s>]/gi)?.length??0)<2) errors.push("Maker must deliver a rich page with a hero and multiple content sections");
   }
   if (stage === "manager" && !["approved", "revision_required", "rejected"].includes(output.decision)) errors.push("Manager decision is invalid");
   return { valid: errors.length === 0, errors };
