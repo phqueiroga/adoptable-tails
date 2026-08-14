@@ -19,6 +19,7 @@ export function validateMakerFiles(files = {}) {
   if (/<a[^>]+href\s*=\s*["']https?:/i.test(html)) errors.push("External links are forbidden");
   if (/@import|url\s*\(\s*['\"]?https?:/i.test(css)) errors.push("External CSS resources are forbidden");
   for (const [pattern, message] of forbidden) if (pattern.test(javascript)) errors.push(message);
+  if(javascript){try{Function(javascript)}catch(error){errors.push(`JavaScript syntax error: ${error instanceof Error?error.message:"invalid syntax"}`)}}
   if (html.length > 30000 || css.length > 30000 || javascript.length > 40000) errors.push("Generated files exceed size limits");
   return { valid: errors.length === 0, errors };
 }
