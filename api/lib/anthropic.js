@@ -1,5 +1,8 @@
 const endpoint = "https://api.anthropic.com/v1/messages";
 const model = process.env.ANTHROPIC_MODEL || "claude-haiku-4-5-20251001";
+const retryableStatuses = new Set([408, 429, 500, 502, 503, 504, 520, 522, 524, 529]);
+
+export function isRetryableAnthropicStatus(status) { return retryableStatuses.has(Number(status)); }
 
 export const DEFAULT_RUN_LIMITS = Object.freeze({
   max_calls: 9,
@@ -56,7 +59,7 @@ export function createUsageTracker(existing = {}, limits = {}) {
 async function request(body, tracker, agentName) {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_NOT_CONFIGURED");
   tracker?.beforeCall(body);
-  let lastError;for(let attempt=0;attempt<3;attempt++){const response=await fetch(endpoint,{method:"POST",headers:{"x-api-key":process.env.ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01","content-type":"application/json"},body:JSON.stringify(body),signal:AbortSignal.timeout(100000)});if(response.ok){const message=await response.json();tracker?.record(agentName,message.usage);return message}const detail=(await response.text()).slice(0,160),error=new Error(`ANTHROPIC_${response.status}_${detail}`);if(![429,529].includes(response.status))throw error;lastError=error;if(attempt<2)await new Promise(resolve=>setTimeout(resolve,1500*(attempt+1)))}throw lastError;
+  let lastError;for(let attempt=0;attempt<3;attempt++){const response=await fetch(endpoint,{method:"POST",headers:{"x-api-key":process.env.ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01","content-type":"application/json"},body:JSON.stringify(body),signal:AbortSignal.timeout(100000)});if(response.ok){const message=await response.json();tracker?.record(agentName,message.usage);return message}const detail=(await response.text()).slice(0,160),error=new Error(`ANTHROPIC_${response.status}_${detail}`);if(!isRetryableAnthropicStatus(response.status))throw error;lastError=error;if(attempt<2)await new Promise(resolve=>setTimeout(resolve,1500*(attempt+1)))}throw lastError;
 }
 
 function textOf(message) { return message.content?.find((item) => item.type === "text")?.text; }
