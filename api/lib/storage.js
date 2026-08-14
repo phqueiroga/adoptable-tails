@@ -1,7 +1,7 @@
 import { get, put } from "@vercel/blob";
 import { createHash } from "node:crypto";
 
-const memory = globalThis.__journeyFoundryRuns ??= new Map();
+const memory = globalThis.__experienceCompassRuns ??= new Map();
 const pathFor = (id) => `runs/${id}.json`;
 
 export async function saveRun(run) {
