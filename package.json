@@ -14,5 +14,8 @@
   "dependencies": {
     "@vercel/blob": "2.8.0",
     "@vercel/functions": "3.9.3"
+  },
+  "devDependencies": {
+    "jsdom": "^26.1.0"
   }
 }
