@@ -20,6 +20,6 @@ export default { async fetch(request) {
   const runLimit=process.env.VERCEL_ENV==="preview"?30:5;
   if(!await consumeRateLimit(clientId,runLimit))return response(request,{error:"RATE_LIMITED",message:`Maximum ${runLimit} new experiences per hour.`},429);
   const validation=validateBriefing(payload.briefing);if(!validation.valid)return response(request,{error:"INVALID_BRIEFING",details:validation.errors},400);
-  const run={id:randomUUID(),status:"queued",created_at:new Date().toISOString(),updated_at:new Date().toISOString(),briefing:normaliseBriefing(payload.briefing),prompt_version:"attractions-v4-compact",outputs:{},tool_calls:[],handoffs:[],validations:{},usage:{calls:0,input_tokens:0,output_tokens:0,estimated_cost_usd:0,agents:{}}};
+  const run={id:randomUUID(),status:"queued",created_at:new Date().toISOString(),updated_at:new Date().toISOString(),briefing:normaliseBriefing(payload.briefing),prompt_version:"attractions-v5-simple-mvp",outputs:{},tool_calls:[],handoffs:[],validations:{},usage:{calls:0,input_tokens:0,output_tokens:0,estimated_cost_usd:0,agents:{}}};
   await saveRun(run);return response(request,{run_id:run.id,status:run.status},202);
 } };

@@ -84,7 +84,7 @@ export async function executeNextStage(run) {
       return run;
     }
     if (run.status === "reviewing") {
-      const r = await callStructured(agents.manager, {briefing: run.briefing, tool_calls: run.tool_calls, researcher: run.outputs.researcher, designer: run.outputs.designer, maker: makerSummary(run.outputs.maker), code_validation: run.validations.code, communicator: run.outputs.communicator, handoffs: run.handoffs}, tracker);
+      const r = await callStructured(agents.manager, {briefing: run.briefing, tool_calls: run.tool_calls, researcher:{research_brief:run.outputs.researcher.research_brief,evidence_items:run.outputs.researcher.evidence_items}, designer: run.outputs.designer, maker: makerSummary(run.outputs.maker), code_validation: run.validations.code, communicator: run.outputs.communicator, handoffs: run.handoffs}, tracker);
       const v = validateHandoff("manager", r.output, run.outputs);
       if (!v.valid) throw new Error(`MANAGER_CONTRACT:${v.errors.join("|")}`);
       run.outputs.manager = r.output;
