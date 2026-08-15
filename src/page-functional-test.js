@@ -12,6 +12,17 @@ function labelOf(el) {
   return `${el.textContent || ""} ${el.getAttribute("aria-label") || ""} ${el.getAttribute("title") || ""}`;
 }
 
+function isVisible(el) {
+  let node = el;
+  while (node && node.nodeType === 1) {
+    if (node.hidden) return false;
+    const style = node.ownerDocument.defaultView.getComputedStyle(node);
+    if (style.display === "none" || style.visibility === "hidden") return false;
+    node = node.parentElement;
+  }
+  return true;
+}
+
 export async function testGeneratedPage(files, productType) {
   const errors = [];
   const previewFiles = injectRewardBadge(injectHeroMedia(files, "", { label: "Preview photo", url: "" }), productType);
@@ -30,6 +41,11 @@ export async function testGeneratedPage(files, productType) {
   window.addEventListener("unhandledrejection", (event) => runtimeErrors.push(String(event.reason)));
   await new Promise((resolve) => setTimeout(resolve, 30));
 
+  const contentSections = [...window.document.querySelectorAll("section")].filter((el) => (el.textContent || "").trim().length > 20);
+  const everVisibleSections = new Set();
+  const snapshotSections = () => { for (const el of contentSections) if (isVisible(el)) everVisibleSections.add(el); };
+  snapshotSections();
+
   const clicked = new Set();
   let mutations = 0;
   let snapshot = window.document.body.innerHTML;
@@ -46,6 +62,7 @@ export async function testGeneratedPage(files, productType) {
       const next = window.document.body.innerHTML;
       if (next !== snapshot) mutations++;
       snapshot = next;
+      snapshotSections();
     }
     await new Promise((resolve) => setTimeout(resolve, 5));
   }
@@ -53,6 +70,14 @@ export async function testGeneratedPage(files, productType) {
   if (runtimeErrors.length) errors.push(...new Set(runtimeErrors.map((message) => `Runtime error: ${message}`)));
   if (clicked.size === 0) errors.push("No functional buttons or controls were found on the generated page");
   if (clicked.size > 0 && mutations === 0) errors.push("Clicking controls produced no visible change — interactions appear non-functional");
+  if (contentSections.length && everVisibleSections.size === 0) errors.push("No content section is ever visible on screen (checked via computed display/visibility) — likely a CSS class the script never toggles, or a visibility mechanism the CSS doesn't match");
+
+  const answerInputs = [...window.document.querySelectorAll("input")].filter((el) => ["text", "search", ""].includes((el.getAttribute("type") || "text").toLowerCase()));
+  if (answerInputs.length) {
+    const allControls = controlsOf(window.document);
+    const hasReveal = allControls.some((el) => /\breveal\b|show\s*(the\s*)?answer|skip\s*(this\s*)?(question|mission)/i.test(labelOf(el)));
+    if (!hasReveal) errors.push('A mission asks visitors to type a specific answer but has no "Reveal answer" control — visitors without on-site knowledge (or a hint that is not enough) can get permanently stuck and never reach the reward');
+  }
 
   if (productType === "interactive_timeline") {
     const hasNext = [...clicked].some((el) => NEXT.test(labelOf(el)));
