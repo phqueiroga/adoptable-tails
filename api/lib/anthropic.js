@@ -106,7 +106,7 @@ export function ensureMinimumPlaceEvidence(output, toolCalls, minimum = 4) {
 }
 
 export async function callStructured(agent, input, tracker) {
-  const isMaker=agent.name==="Maker",isDesigner=agent.name==="Designer",isResearcher=agent.name==="Researcher",max_tokens=isMaker?4300:isDesigner?1800:isResearcher?1600:1200;
+  const isMaker=agent.name==="Maker",isDesigner=agent.name==="Designer",isResearcher=agent.name==="Researcher",max_tokens=isMaker?4300:isDesigner?1800:isResearcher?2200:1200;
   const create=(instruction,tokenLimit=max_tokens)=>request({model,max_tokens:tokenLimit,temperature:0.2,system:agent.system,messages:[{role:"user",content:JSON.stringify({...input,instruction})}],output_config:{format:{type:"json_schema",schema:agent.schema}}},tracker,agent.name);
   const message=await create(isMaker?"Build one visually memorable but efficient visitor microsite: photographic hero, reason-to-visit-now, signature moment, two supporting moments, three navigable areas, exactly four interactions, progress and contextual reward unlock. Keep HTML under 4200 characters, CSS under 2600, JavaScript under 1200 and all code under 8000 total. Use shared classes and concise copy. It opens from a normal link: no QR or scan. Keep every non-code array to at most four short items. No extra features.":"Return a compact complete handoff. Use no more than four short items per array and one short paragraph per scalar field.");
   return{output:parseOutput(message,agent),usage:message.usage,model};
