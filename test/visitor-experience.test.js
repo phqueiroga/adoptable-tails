@@ -18,6 +18,7 @@ test("standalone visitor URL renders only an approved Maker product",async()=>{
   const frame=document.querySelector("iframe");
   assert.equal(requests,1);
   assert.ok(frame);
+  assert.match(frame.getAttribute("sandbox"),/allow-modals/);
   assert.match(frame.srcdoc,/History in Three Steps/);
   assert.equal(document.querySelector("header"),null);
   dom.window.close();

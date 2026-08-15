@@ -17,7 +17,7 @@ async function openExperience(){
     if(photo){try{const photoResponse=await fetch(`${API.replace(/\/runs$/,"/photo")}?run_id=${encodeURIComponent(runId)}`);if(photoResponse.ok){const blob=await photoResponse.blob();data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob)})}}catch{}}
     const files=injectHeroMedia(run.outputs.maker.files,data,{label:author?.display_name?`Photo by ${author.display_name} on Google Maps`:`Photo of ${photo?.place_name||"the attraction"} from Google Maps`,url:author?.uri||photo?.google_maps_uri||""});
     document.title=`${run.outputs.maker.product_title} · Experience Compass`;
-    root.innerHTML='<iframe title="Visitor experience" sandbox="allow-scripts allow-popups"></iframe>';
+    root.innerHTML='<iframe title="Visitor experience" sandbox="allow-scripts allow-modals allow-popups"></iframe>';
     root.querySelector("iframe").srcdoc=makeSrcdoc(files);
   }catch(error){fail(error.message||"The experience could not be opened.")}
 }
