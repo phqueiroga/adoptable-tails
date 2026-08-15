@@ -1,11 +1,15 @@
 import { JSDOM, VirtualConsole } from "jsdom";
 import { injectHeroMedia, injectRewardBadge, makeSrcdoc } from "./code-validator.js";
 
-const NEXT = /^\s*next\s*$/i;
-const PREVIOUS = /^\s*previous\s*$/i;
+const NEXT = /\bnext\b/i;
+const PREVIOUS = /\bprevious\b/i;
 
 function controlsOf(document) {
   return [...document.querySelectorAll("button, [role='button']")];
+}
+
+function labelOf(el) {
+  return `${el.textContent || ""} ${el.getAttribute("aria-label") || ""} ${el.getAttribute("title") || ""}`;
 }
 
 export async function testGeneratedPage(files, productType) {
@@ -51,14 +55,14 @@ export async function testGeneratedPage(files, productType) {
   if (clicked.size > 0 && mutations === 0) errors.push("Clicking controls produced no visible change — interactions appear non-functional");
 
   if (productType === "interactive_timeline") {
-    const hasNext = [...clicked].some((el) => NEXT.test(el.textContent || ""));
+    const hasNext = [...clicked].some((el) => NEXT.test(labelOf(el)));
     if (!hasNext) {
-      errors.push('Timeline is missing a functional control labelled "Next"');
+      errors.push('Timeline is missing a functional "Next" control');
     } else {
       let previousSnapshot = window.document.body.innerHTML;
       let progressed = 0;
       for (let step = 0; step < 3; step++) {
-        const nextButton = controlsOf(window.document).find((el) => NEXT.test(el.textContent || "") && !el.disabled);
+        const nextButton = controlsOf(window.document).find((el) => NEXT.test(labelOf(el)) && !el.disabled);
         if (!nextButton) break;
         try {
           nextButton.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
@@ -72,8 +76,8 @@ export async function testGeneratedPage(files, productType) {
       }
       if (progressed === 0) errors.push('Clicking "Next" repeatedly did not advance the timeline content');
     }
-    const hasPrevious = controlsOf(window.document).some((el) => PREVIOUS.test(el.textContent || ""));
-    if (!hasPrevious) errors.push('Timeline is missing a functional control labelled "Previous"');
+    const hasPrevious = [...clicked].some((el) => PREVIOUS.test(labelOf(el)));
+    if (!hasPrevious) errors.push('Timeline is missing a functional "Previous" control');
   }
 
   dom.window.close();
