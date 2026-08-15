@@ -35,6 +35,7 @@ export function validateHandoff(stage, output, cumulative = {}) {
     if (output.build_status !== "ready") errors.push("Maker build is not ready");
     if (cumulative.media?.hero_photo && (!output.files?.html?.includes("{{HERO_IMAGE}}") || !output.files?.html?.includes("{{HERO_ATTRIBUTION}}"))) errors.push("Maker must place the supplied hero image and attribution tokens");
     if (!/<header[\s>]/i.test(output.files?.html||"") || !/<nav[\s>]/i.test(output.files?.html||"") || ((output.files?.html||"").match(/<section[\s>]/gi)?.length??0)<3) errors.push("Maker must deliver a rich microsite with a hero, navigation and three content sections");
+    if (output.product_type === "interactive_timeline" && !/\bnext\b/i.test(output.files?.html||"")) errors.push("Timeline must include a visible Next control");
   }
   if (stage === "manager" && !["approved", "revision_required", "rejected"].includes(output.decision)) errors.push("Manager decision is invalid");
   return { valid: errors.length === 0, errors };
