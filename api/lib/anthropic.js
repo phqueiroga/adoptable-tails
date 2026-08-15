@@ -5,8 +5,8 @@ const retryableStatuses = new Set([408, 429, 500, 502, 503, 504, 520, 522, 524, 
 export function isRetryableAnthropicStatus(status) { return retryableStatuses.has(Number(status)); }
 
 export const DEFAULT_RUN_LIMITS = Object.freeze({
-  max_calls: 5,
-  max_estimated_cost_usd: 0.08,
+  max_calls: 9,
+  max_estimated_cost_usd: 0.20,
 });
 
 export function estimateHaikuCost(usage = {}) {
