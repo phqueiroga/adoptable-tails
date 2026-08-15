@@ -3,7 +3,7 @@ export const agentOrder = ["researcher", "designer", "maker", "communicator", "m
 
 const required = {
   researcher: ["research_question", "opportunity_diagnosis", "audience_needs", "business_needs", "tool_decisions", "source_queries", "evidence_items", "experience_opportunities", "constraints", "unknowns", "research_brief"],
-  designer: ["selected_product", "selection_rationale", "design_goal", "experience_concept", "navigation_sections", "visitor_journey", "information_architecture", "interaction_specification", "gamification_mechanics", "reward_strategy", "required_evidence_ids", "content_requirements", "visual_direction", "accessibility_requirements", "functional_requirements", "acceptance_criteria", "known_tradeoffs"],
+  designer: ["selected_product", "selection_rationale", "design_goal", "why_visit_now", "signature_moment", "supporting_moments", "experience_concept", "navigation_sections", "visitor_journey", "information_architecture", "interaction_specification", "gamification_mechanics", "reward_strategy", "required_evidence_ids", "content_requirements", "visual_direction", "accessibility_requirements", "functional_requirements", "acceptance_criteria", "known_tradeoffs"],
   maker: ["product_type", "product_title", "implementation_summary", "files", "implemented_features", "evidence_trace", "usage_instructions", "acceptance_check", "known_limitations", "build_status"],
   communicator: ["value_proposition", "audience_message", "experience_name_and_tagline", "visitor_touchpoints", "channel_plan", "launch_sequence", "ready_to_use_copy", "engagement_metrics", "communication_risks"],
   manager: ["decision", "validation_checks", "issues", "executive_summary", "operational_plan", "launch_conditions", "success_metrics", "risks", "future_improvements"]
@@ -26,6 +26,7 @@ export function validateHandoff(stage, output, cumulative = {}) {
     if (!output.required_evidence_ids?.every((id)=>evidenceIds.has(id))) errors.push("Designer referenced evidence IDs not supplied by Researcher");
     if ((output.navigation_sections?.length??0)<3) errors.push("Designer must define Discover, Experience and Reward navigation areas");
     if ((output.interaction_specification?.length??0)<4) errors.push("Designer must specify four interactive moments");
+    if (!output.why_visit_now?.trim() || !output.signature_moment?.trim() || (output.supporting_moments?.length??0)<2) errors.push("Designer must define a compelling reason to visit now, signature moment and two supporting moments");
     if (output.reward_strategy?.type==="physical_proposal"&&output.reward_strategy?.operational_status!=="proposal_requires_approval") errors.push("Physical rewards must require organisation approval");
   }
   if (stage === "maker") {
