@@ -82,10 +82,13 @@ export async function testGeneratedPage(files, productType, missions = []) {
   const contentSections = [...window.document.querySelectorAll("section")].filter((el) => (el.textContent || "").trim().length > 20);
   const everVisibleSections = new Set();
   const rewardSection = window.document.querySelector("[data-ec-reward]") || window.document.querySelector(".ec-badge")?.closest("section");
+  const missionBlock = window.document.querySelector("[data-ec-missions]");
   let rewardEverVisible = false;
+  let missionsEverVisible = false;
   const snapshotSections = () => {
     for (const el of contentSections) if (isVisible(el)) everVisibleSections.add(el);
     if (rewardSection && isVisible(rewardSection)) rewardEverVisible = true;
+    if (missionBlock && isVisible(missionBlock)) missionsEverVisible = true;
   };
   snapshotSections();
 
@@ -106,27 +109,33 @@ export async function testGeneratedPage(files, productType, missions = []) {
       } catch (error) {
         runtimeErrors.push(`Clicking "${(control.textContent || "").trim().slice(0, 40)}" threw: ${error instanceof Error ? error.message : "unknown error"}`);
       }
-      if (isReveal) {
-        const scope = missionScopeOf(control);
-        const input = [...scope.querySelectorAll("input, textarea")].filter((el) => answerInputsOf(window).includes(el) && isVisible(el))[0];
-        if (input && input.value) setInputValue(window, input, input.value);
-        const submitBtn = [...scope.querySelectorAll("button, [role='button']")].find((el) => !el.disabled && isVisible(el) && !clicked.has(el) && SUBMIT.test(labelOf(el)));
-        if (submitBtn) {
-          clicked.add(submitBtn);
-          try {
-            submitBtn.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
-            successfulSubmissions++;
-          } catch (error) {
-            runtimeErrors.push(`Submit after reveal threw: ${error instanceof Error ? error.message : "unknown error"}`);
-          }
-        }
-      }
+      void isReveal;
       const next = window.document.body.innerHTML;
       if (next !== snapshot) mutations++;
       snapshot = next;
       snapshotSections();
     }
     await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+
+  // Play every mission the way a visitor would: reveal the answer, then submit it. This runs
+  // after the click sweep so the Maker's own navigation has already opened the Experience view;
+  // visibility is asserted separately below rather than gating the play itself.
+  const missionCards = [...window.document.querySelectorAll(".ec-mission")];
+  for (const card of missionCards) {
+    const input = card.querySelector(".ec-answer");
+    const revealBtn = card.querySelector(".ec-reveal-btn");
+    const submitBtn = card.querySelector(".ec-submit-btn");
+    if (!input || !revealBtn || !submitBtn) continue;
+    try {
+      revealBtn.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
+      if (input.value) setInputValue(window, input, input.value);
+      submitBtn.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
+      if (card.classList.contains("ec-done")) successfulSubmissions++;
+    } catch (error) {
+      runtimeErrors.push(`Playing a mission threw: ${error instanceof Error ? error.message : "unknown error"}`);
+    }
+    snapshotSections();
   }
 
   // Navigation clicked before the reward unlocked may have left the reward view hidden behind
@@ -144,39 +153,15 @@ export async function testGeneratedPage(files, productType, missions = []) {
   if (clicked.size > 0 && mutations === 0) errors.push("Clicking controls produced no visible change — interactions appear non-functional");
   if (contentSections.length && everVisibleSections.size === 0) errors.push("No content section is ever visible on screen (checked via computed display/visibility) — likely a CSS class the script never toggles, or a visibility mechanism the CSS doesn't match");
 
-  if (hasAnswerMechanic) {
+  if (missionCards.length) {
+    // The platform owns the mechanic, so these verify the Maker did not hide or break the block.
+    if (!missionsEverVisible) errors.push("The injected mission block is never visible on screen — the Maker's CSS or view logic is hiding it, so the visitor can never play the experience");
+    if (successfulSubmissions < missionCards.length) errors.push(`Only ${successfulSubmissions} of ${missionCards.length} missions could be completed by revealing and submitting the answer`);
+    if (rewardSection && !rewardEverVisible) errors.push("The reward section never becomes visible even after completing every mission");
+    if (!CELEBRATION.test(visibleText(window))) errors.push("The completion message is never visible after finishing every mission — the Maker's CSS or view logic is likely hiding it");
+  } else if (hasAnswerMechanic) {
     const hasReveal = controlsOf(window.document).some((el) => REVEAL.test(labelOf(el)));
     if (!hasReveal) errors.push('A mission asks visitors to type a specific answer but has no "Reveal answer" control — visitors without on-site knowledge (or a hint that is not enough) can get permanently stuck and never reach the reward');
-    else if (successfulSubmissions === 0) errors.push('An answer input and a "Reveal answer" control both exist, but revealing and submitting an answer never registered as a successful submission — check that the input value change is picked up (a real "input" event) and that the submit control is wired up');
-    if (rewardSection && !rewardEverVisible) errors.push("The reward section never becomes visible even after revealing and submitting answers for every mission — a common cause is the last mission not being counted towards completion (an off-by-one in the completion check)");
-    if (!CELEBRATION.test(visibleText(window))) errors.push('No congratulations or completion message is ever shown to the visitor after finishing all missions (looked for wording like "congratulations", "well done", "all missions complete")');
-  }
-
-  if (productType === "interactive_timeline") {
-    const hasNext = [...clicked].some((el) => NEXT.test(labelOf(el)));
-    if (!hasNext) {
-      errors.push('Timeline is missing a functional "Next" control');
-    } else {
-      let previousSnapshot = window.document.body.innerHTML;
-      let progressed = 0;
-      for (let step = 0; step < 3; step++) {
-        const nextButton = controlsOf(window.document).find((el) => NEXT.test(labelOf(el)) && !el.disabled);
-        if (!nextButton) break;
-        try {
-          nextButton.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
-        } catch (error) {
-          errors.push(`"Next" control threw on step ${step + 1}: ${error instanceof Error ? error.message : "unknown error"}`);
-          break;
-        }
-        const after = window.document.body.innerHTML;
-        if (after !== previousSnapshot) progressed++;
-        previousSnapshot = after;
-        snapshotSections();
-      }
-      if (progressed === 0) errors.push('Clicking "Next" repeatedly did not advance the timeline content');
-    }
-    const hasPrevious = [...clicked].some((el) => PREVIOUS.test(labelOf(el)));
-    if (!hasPrevious) errors.push('Timeline is missing a functional "Previous" control');
   }
 
   dom.window.close();

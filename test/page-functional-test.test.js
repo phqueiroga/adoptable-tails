@@ -52,42 +52,10 @@ test("a timeline whose Next button does nothing fails the functional test", asyn
   assert.ok(result.errors.some((message) => /did not advance|no visible change/i.test(message)));
 });
 
-test("a fully working four-mission reveal/type/submit flow with congratulations passes cleanly", async () => {
-  const files = {
-    html: `<main><h1>Four Missions</h1>
-      <section id="reward" class="locked">{{REWARD_BADGE}}</section>
-      <section><p id="status"></p>
-        <div class="mission"><input type="text" class="ans"><button class="reveal">Reveal answer</button><button class="submit">Submit</button></div>
-        <div class="mission"><input type="text" class="ans"><button class="reveal">Reveal answer</button><button class="submit">Submit</button></div>
-        <div class="mission"><input type="text" class="ans"><button class="reveal">Reveal answer</button><button class="submit">Submit</button></div>
-        <div class="mission"><input type="text" class="ans"><button class="reveal">Reveal answer</button><button class="submit">Submit</button></div>
-      </section></main>`,
-    css: "#reward.locked{display:none}",
-    javascript: `let completed=0;document.querySelectorAll('.mission').forEach((m,idx)=>{const input=m.querySelector('.ans');m.querySelector('.reveal').addEventListener('click',()=>{input.value='answer'+idx});m.querySelector('.submit').addEventListener('click',()=>{completed++;if(completed===4){document.getElementById('status').textContent='Congratulations! You completed all missions.';document.getElementById('reward').classList.remove('locked')}})});`,
-  };
-  const result = await testGeneratedPage(files, "treasure_hunt");
-  assert.deepEqual(result.errors, []);
-  assert.equal(result.valid, true);
-});
-
-test("an off-by-one bug that never counts the fourth mission is caught", async () => {
-  const files = {
-    html: `<main><h1>Four Missions</h1>
-      <section id="reward" class="locked">{{REWARD_BADGE}}</section>
-      <section>
-        <div class="mission" data-idx="0"><input type="text" class="ans"><button class="reveal">Reveal answer</button><button class="submit">Submit</button></div>
-        <div class="mission" data-idx="1"><input type="text" class="ans"><button class="reveal">Reveal answer</button><button class="submit">Submit</button></div>
-        <div class="mission" data-idx="2"><input type="text" class="ans"><button class="reveal">Reveal answer</button><button class="submit">Submit</button></div>
-        <div class="mission" data-idx="3"><input type="text" class="ans"><button class="reveal">Reveal answer</button><button class="submit">Submit</button></div>
-      </section></main>`,
-    css: "#reward.locked{display:none}",
-    javascript: `let completed=0;document.querySelectorAll('.mission').forEach((m,idx)=>{const input=m.querySelector('.ans');m.querySelector('.reveal').addEventListener('click',()=>{input.value='answer'+idx});m.querySelector('.submit').addEventListener('click',()=>{if(idx<3)completed++;if(completed===4)document.getElementById('reward').classList.remove('locked')})});`,
-  };
-  const result = await testGeneratedPage(files, "treasure_hunt");
-  assert.equal(result.valid, false);
-  assert.ok(result.errors.some((message) => /reward section never becomes visible/i.test(message)), JSON.stringify(result.errors));
-  assert.ok(result.errors.some((message) => /no congratulations/i.test(message)), JSON.stringify(result.errors));
-});
+// Replaced by the platform-engine tests below: the Maker can no longer build its own
+// mission mechanic (contracts.js requires the {{MISSIONS}} token), so scenarios where the
+// Maker's own scoring is broken are unreachable. What can still break is the Maker hiding
+// or overriding the injected block with its own CSS, covered directly below.
 
 const PLATFORM_MISSIONS = [
   { title: "Columns", teaser: "Count them", question: "How many columns?", answer: "86", hint: "Look up", evidence_id: "e1" },
@@ -108,6 +76,26 @@ test("the platform mission engine makes a mechanic-free Maker page fully playabl
   const result = await testGeneratedPage(MAKER_WITHOUT_ANY_MECHANIC, "treasure_hunt", PLATFORM_MISSIONS);
   assert.deepEqual(result.errors, []);
   assert.equal(result.valid, true);
+});
+
+test("a same-specificity Maker override cannot hide the mission block", async () => {
+  const files = { ...MAKER_WITHOUT_ANY_MECHANIC, css: `${MAKER_WITHOUT_ANY_MECHANIC.css}.ec-missions{display:none}` };
+  const result = await testGeneratedPage(files, "treasure_hunt", PLATFORM_MISSIONS);
+  assert.deepEqual(result.errors, [], "platform CSS is emitted after the Maker's, so an equal-specificity rule loses");
+});
+
+// jsdom resolves the cascade by source order alone and ignores both specificity and
+// !important (verified directly against this jsdom version), so a Maker rule that would
+// out-specify the platform in a real browser cannot be reproduced in the functional test.
+// The defence is therefore structural rather than observed: the platform marks the two
+// rules that decide whether the experience is playable at all as !important, which real
+// browsers honour. The runtime visibility check still catches JS-driven hiding, which is
+// how the invisible-content bug in real-run-regression.test.js actually occurred.
+test("the platform protects playability with !important on the decisive rules", async () => {
+  const { makeSrcdoc } = await import("../src/code-validator.js");
+  const srcdoc = makeSrcdoc({ html: "<main><h1>x</h1></main>", css: "", javascript: "" });
+  assert.match(srcdoc, /\.ec-missions\{[^}]*display:grid!important/);
+  assert.match(srcdoc, /\[data-ec-reward\]\.ec-locked\{display:none!important\}/);
 });
 
 test("the reward stays locked until every mission is submitted", async () => {
