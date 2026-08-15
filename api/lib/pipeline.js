@@ -40,10 +40,11 @@ export async function executeNextStage(run) {
       r.output=ensureMinimumPlaceEvidence(ensureEvidenceTrace(r.output,[placeCall]),[placeCall]);
       const v = validateHandoff("researcher", r.output);
       if (!v.valid) throw new Error(`RESEARCHER_CONTRACT:${v.errors.join("|")}`);
+      const media = heroMedia(r.tool_calls);
+      if (!media.hero_photo) throw new Error("RESEARCH_NO_PHOTO:No verifiable photo of the attraction was found; every experience must show a real image of the location");
       run.tool_calls = [placeCall];
       run.outputs.researcher = r.output;
-      run.media = heroMedia(r.tool_calls);
-      if (!run.media.hero_photo) throw new Error("RESEARCH_NO_PHOTO:No verifiable photo of the attraction was found; every experience must show a real image of the location");
+      run.media = media;
       run.handoffs.push({from: "researcher", to: "designer", validated: true, at: new Date().toISOString()});
       run.status = "designing";
       await saveRun(run);
