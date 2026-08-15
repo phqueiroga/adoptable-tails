@@ -8,7 +8,7 @@ export default {async fetch(request){
   if(request.method==="OPTIONS")return new Response(null,{status:204,headers:{...cors(request),"Access-Control-Allow-Methods":"GET"}});
   if(request.method!=="GET")return json(request,{error:"METHOD_NOT_ALLOWED"},405);
   const origin=request.headers.get("origin");if(origin&&!allowed.has(origin))return json(request,{error:"ORIGIN_NOT_ALLOWED"},403);
-  const id=new URL(request.url).searchParams.get("run_id");if(!/^[0-9a-f-]{36}$/i.test(id||""))return json(request,{error:"INVALID_RUN_ID"},400);
+  const id=new URL(request.url).searchParams.get("run_id")?.toLowerCase();if(!/^[0-9a-f-]{36}$/i.test(id||""))return json(request,{error:"INVALID_RUN_ID"},400);
   const run=await loadRun(id);if(!run||run.status!=="approved")return json(request,{error:"PHOTO_NOT_AVAILABLE"},404);
   const name=run.media?.hero_photo?.name;if(!/^places\/[A-Za-z0-9_-]+\/photos\/[A-Za-z0-9_-]+$/.test(name||"")||!process.env.GOOGLE_MAPS_API_KEY)return json(request,{error:"PHOTO_NOT_AVAILABLE"},404);
   const url=`https://places.googleapis.com/v1/${name}/media?maxWidthPx=1600&key=${encodeURIComponent(process.env.GOOGLE_MAPS_API_KEY)}`;
