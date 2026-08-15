@@ -32,7 +32,8 @@ export function sanitiseMakerFiles(files = {}) {
 
 export function makeSrcdoc(files) {
   const csp = "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; font-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'";
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="${csp}"><style>${files.css}</style></head><body>${files.html}<script>${files.javascript}<\/script></body></html>`;
+  const bootstrap="try{if(typeof initExperience==='function')initExperience()}catch(error){console.error('Experience initialisation failed',error)}";
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="${csp}"><style>${files.css}</style></head><body>${files.html}<script>${files.javascript}\n${bootstrap}<\/script></body></html>`;
 }
 
 const escapeHtml=(value="")=>String(value).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;");
