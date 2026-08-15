@@ -23,7 +23,7 @@ GitHub Pages renders approved Maker files in a sandboxed iframe
 
 - **GitHub Pages:** collects the scoped organisation briefing, starts/resumes a run, shows validated evidence and renders only approved experiences. It contains no secrets.
 - **Vercel Functions:** holds API keys, validates input and handoffs, exposes controlled external tools, scans generated code, limits public run creation and returns public-safe results.
-- **Research tools:** Google Places identifies and grounds the named attraction in current place metadata. Web search supplies relevant historical or cultural context. The Researcher records all calls and unknowns.
+- **Research tools:** One Google Places lookup identifies and grounds the named attraction in current place metadata. The Researcher interprets that verified context alongside the client's supplied stories; it does not use paid web search.
 - **Vercel Blob:** privately stores briefings, tool evidence, agent outputs, validations and generated files. `useCache: false` is required because the same run record changes after every stage.
 
 ## Maker security boundary

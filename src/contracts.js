@@ -2,7 +2,7 @@ export const productTypes = ["treasure_hunt", "interactive_timeline"];
 export const agentOrder = ["researcher", "designer", "maker", "communicator", "manager"];
 
 const required = {
-  researcher: ["research_question", "opportunity_diagnosis", "audience_needs", "business_needs", "tool_decisions", "source_queries", "evidence_items", "experience_opportunities", "constraints", "unknowns", "research_brief"],
+  researcher: ["research_question", "opportunity_diagnosis", "tool_decisions", "source_queries", "evidence_items", "unknowns", "research_brief"],
   designer: ["selected_product", "selection_rationale", "design_goal", "why_visit_now", "signature_moment", "supporting_moments", "experience_concept", "navigation_sections", "visitor_journey", "information_architecture", "interaction_specification", "gamification_mechanics", "reward_strategy", "required_evidence_ids", "content_requirements", "visual_direction", "accessibility_requirements", "functional_requirements", "acceptance_criteria", "known_tradeoffs"],
   maker: ["product_type", "product_title", "implementation_summary", "files", "implemented_features", "evidence_trace", "usage_instructions", "acceptance_check", "known_limitations", "build_status"],
   communicator: ["value_proposition", "audience_message", "experience_name_and_tagline", "visitor_touchpoints", "channel_plan", "launch_sequence", "ready_to_use_copy", "engagement_metrics", "communication_risks"],
