@@ -38,7 +38,7 @@ test("a complete form submits, advances and renders the returned run", async () 
     organisation_name:"Irish Whiskey Museum", attraction_type:"museum", destination:"Dublin",
     engagement_problem:"Families do not engage with the full story.", target_audience:"Families with children",
     existing_content:"History of Irish whiskey and production objects", visitor_outcome:"Understand production and historical differences",
-    resources_and_constraints:"Mobile-first", desired_duration_hours:"1", desired_tone:"Curious and funny",
+    desired_duration_hours:"1", desired_tone:"Curious and funny",
   };
   for (const [name,value] of Object.entries(values)) window.document.querySelector(`[name="${name}"]`).value=value;
   window.document.querySelector("#brief-form").dispatchEvent(new window.SubmitEvent("submit",{bubbles:true,cancelable:true}));

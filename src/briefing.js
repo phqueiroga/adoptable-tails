@@ -3,7 +3,7 @@ export const attractionTypes = ["museum", "park", "heritage_site", "visitor_cent
 export const clientFields = [
   "organisation_name", "attraction_type", "destination", "engagement_problem",
   "target_audience", "existing_content", "visitor_outcome",
-  "resources_and_constraints", "desired_duration_minutes", "desired_tone",
+  "desired_duration_minutes", "desired_tone",
 ];
 
 export function validateBriefing(value) {
@@ -33,11 +33,11 @@ export function normaliseBriefing(value) {
     visitor_outcome: supplied("visitor_outcome"),
     desired_duration_minutes: Number(value.desired_duration_minutes),
     desired_tone: supplied("desired_tone"),
-    available_resources: supplied("resources_and_constraints"),
-    constraints: supplied("resources_and_constraints"),
+    available_resources: "A standard mobile web browser only; no QR codes, signs, staff action or special equipment assumed.",
+    constraints: "Mobile-first classroom prototype opened through a normal URL. Do not require scanning, location, physical-presence verification, accounts, storage or unprovided operational resources.",
     business_objective: "Not supplied — infer cautiously and label as an assumption.",
     accessibility_requirements: "Apply inclusive defaults: keyboard access, readable contrast, plain language and no colour-only meaning; record unknowns.",
     success_indicator: "Not supplied — propose a measurable indicator and label it as a recommendation.",
-    inference_note: "The client supplied attraction content and constraints. Product selection and all strategy beyond these fields are agent decisions that must be labelled and grounded in evidence.",
+    inference_note: "The client supplied the attraction content, audience and intended outcome. Mobile-first delivery constraints are fixed by the system; product selection and strategy are agent decisions that must be labelled and grounded in evidence.",
   };
 }
