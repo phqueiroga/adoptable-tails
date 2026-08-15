@@ -107,6 +107,22 @@ export function reconcileToolQueries(output, toolCalls) {
   return output;
 }
 
+export function ensureMinimumPlaceEvidence(output, toolCalls, minimum = 4) {
+  output.evidence_items ??= [];
+  const placeCall = toolCalls.find((call) => call.name === "search_places" && call.result?.results?.[0]);
+  if (!placeCall || output.evidence_items.length >= minimum) return output;
+  const place = placeCall.result.results[0], source_query_id = placeCall.id, source_url = place.source_url;
+  const candidates = [
+    {suffix:"identity",label:"Place identity",fact:`Google Places identifies the attraction as ${place.label}${place.address?` at ${place.address}`:""}.`,relevance:"Grounds the experience in the correct attraction."},
+    place.type&&{suffix:"category",label:"Place category",fact:`Google Places classifies ${place.label} as ${place.type.replaceAll("_"," ")}.`,relevance:"Supports an attraction-appropriate visitor format."},
+    place.business_status&&{suffix:"status",label:"Current listing status",fact:`The Google Places listing reports the business status as ${place.business_status.replaceAll("_"," ").toLowerCase()}.`,relevance:"Confirms the current listing context without predicting availability."},
+    Number.isFinite(place.rating)&&{suffix:"rating",label:"Visitor rating context",fact:`The listing reports a ${place.rating} rating from ${place.user_rating_count||"an unspecified number of"} Google users.`,relevance:"Provides current listing context, not evidence of visitor behaviour."},
+  ].filter(Boolean);
+  const ids = new Set(output.evidence_items.map((item)=>item.entity_id));
+  for (const candidate of candidates) { if(output.evidence_items.length>=minimum)break;const entity_id=`${place.entity_id}:${candidate.suffix}`;if(!ids.has(entity_id))output.evidence_items.push({entity_id,source_query_id,label:candidate.label,fact:candidate.fact,source_url,relevance:candidate.relevance}); }
+  return output;
+}
+
 export async function callStructured(agent, input, tracker) {
   const isMaker=agent.name==="Maker",isDesigner=agent.name==="Designer",max_tokens=isMaker?5600:isDesigner?3000:2600;
   const create=(instruction)=>request({model,max_tokens,temperature:0.2,system:agent.system,messages:[{role:"user",content:JSON.stringify({...input,instruction})}],output_config:{format:{type:"json_schema",schema:agent.schema}}},tracker,agent.name);
@@ -119,5 +135,5 @@ export async function callResearcherWithTools(agent, briefing, definitions, exec
   const hasPlaces=definitions.some(tool=>tool.name==="search_places");if(!hasPlaces)throw new Error("GOOGLE_MAPS_NOT_CONFIGURED");const tools=[{type:"web_search_20250305",name:"web_search",max_uses:3},...definitions],messages=[{role:"user",content:JSON.stringify({briefing,instruction:"First identify the named attraction with Google Places. Then gather only the strongest historical, cultural, observable and visitor-relevant evidence needed for Discover, Experience and Reward areas. Make no decorative calls. Return four to six concise evidence items and distinguish supplied content, sourced facts and unknowns."})}],toolCalls=[],serverSearches=[];let message,hadExternalSource=false,needsFinalResponse=false;
   for(let turn=0;turn<3;turn++){const tool_choice=turn===0?{type:"tool",name:"search_places"}:{type:"auto"},max_tokens=turn===0?900:2400;message=await request({model,max_tokens,temperature:0.15,system:agent.system,messages,tools,tool_choice,output_config:{format:{type:"json_schema",schema:agent.schema}}},tracker,agent.name);recordServerSearches(message.content,serverSearches);if(message.content?.some(item=>item.type==="web_search_tool_result"))hadExternalSource=true;const uses=message.content?.filter(item=>item.type==="tool_use")??[];if(!uses.length){needsFinalResponse=false;break}needsFinalResponse=true;messages.push({role:"assistant",content:completeToolHistory(message.content)});const results=[];for(const use of uses){try{const result=await executor(use.name,use.input),id=`tool-${toolCalls.length+1}`;toolCalls.push({id,name:use.name,input:use.input,result});results.push({type:"tool_result",tool_use_id:use.id,content:JSON.stringify({source_query_id:id,...result})})}catch(error){results.push({type:"tool_result",tool_use_id:use.id,is_error:true,content:error instanceof Error?error.message:"TOOL_FAILED"})}}messages.push({role:"user",content:results})}
   if(!message)throw new Error("RESEARCHER_EMPTY_OUTPUT");if(needsFinalResponse){messages.push({role:"user",content:"Tool-use limit reached. Return the compact handoff now with four to six strongest evidence items."});message=await request({model,max_tokens:2800,temperature:0.1,system:agent.system,messages,output_config:{format:{type:"json_schema",schema:agent.schema}}},tracker,agent.name)}let output;try{output=parseOutput(message,agent)}catch(error){if(!(error instanceof Error)||!error.message.endsWith("_TRUNCATED_OUTPUT"))throw error;messages.push({role:"user",content:"Return the same handoff radically shortened with exactly four evidence items, at most two other items per array and one sentence per field. Do not call tools."});message=await request({model,max_tokens:2500,temperature:0,system:agent.system,messages,output_config:{format:{type:"json_schema",schema:agent.schema}}},tracker,agent.name);try{output=parseOutput(message,agent)}catch{throw new Error("RESEARCHER_OUTPUT_TOO_LARGE")}}if(!toolCalls.length&&!hadExternalSource)throw new Error("RESEARCHER_DID_NOT_USE_EXTERNAL_SOURCE");
-  return{output:reconcileToolQueries(reconcileServerSearches(output,serverSearches),toolCalls),tool_calls:toolCalls,usage:message.usage,model};
+  return{output:reconcileToolQueries(ensureMinimumPlaceEvidence(reconcileServerSearches(output,serverSearches),toolCalls),toolCalls),tool_calls:toolCalls,usage:message.usage,model};
 }
