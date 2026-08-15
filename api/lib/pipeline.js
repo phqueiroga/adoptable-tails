@@ -1,8 +1,8 @@
 import {agents} from "../../agents/definitions.js";
 import {validateHandoff} from "../../src/contracts.js";
 import {sanitiseMakerFiles, validateMakerFiles} from "../../src/code-validator.js";
-import {callResearcherWithTools, callStructured, createUsageTracker} from "./anthropic.js";
-import {externalToolDefinitions, executeExternalTool} from "./external-tools.js";
+import {callStructured, createUsageTracker, ensureEvidenceTrace, ensureMinimumPlaceEvidence, reconcileToolQueries} from "./anthropic.js";
+import {executeExternalTool} from "./external-tools.js";
 import {saveRun} from "./storage.js";
 
 const terminal = new Set(["approved", "revision_required", "rejected", "failed"]);
@@ -19,6 +19,12 @@ const makerSummary = (maker = {}) => ({
 });
 export const heroMedia=(toolCalls=[])=>{for(const call of toolCalls){const place=call.result?.results?.find(item=>item.photo);if(place)return{hero_photo:{...place.photo,place_id:place.place_id,place_name:place.label}}}return{hero_photo:null}};
 
+async function lookupAttraction(briefing) {
+  const input={query:briefing.organisation_name,destination:briefing.destination,open_now:false,min_rating:0,page_size:3};
+  const result=await executeExternalTool("search_places",input);
+  return {id:"tool-1",name:"search_places",input,result};
+}
+
 export async function executeNextStage(run) {
   if (terminal.has(run.status)) return run;
   const tracker = createUsageTracker(run.usage);
@@ -30,10 +36,13 @@ export async function executeNextStage(run) {
       await saveRun(run);
     }
     if (run.status === "researching") {
-      const r = await callResearcherWithTools(agents.researcher, run.briefing, externalToolDefinitions, executeExternalTool, tracker);
+      const placeCall=await lookupAttraction(run.briefing);
+      const r = await callStructured(agents.researcher, {briefing:run.briefing,google_places:{source_query_id:placeCall.id,...placeCall.result}}, tracker);
+      r.output=reconcileToolQueries(r.output,[placeCall]);
+      r.output=ensureMinimumPlaceEvidence(ensureEvidenceTrace(r.output,[placeCall]),[placeCall]);
       const v = validateHandoff("researcher", r.output);
       if (!v.valid) throw new Error(`RESEARCHER_CONTRACT:${v.errors.join("|")}`);
-      run.tool_calls = r.tool_calls;
+      run.tool_calls = [placeCall];
       run.outputs.researcher = r.output;
       run.media = heroMedia(r.tool_calls);
       run.handoffs.push({from: "researcher", to: "designer", validated: true, at: new Date().toISOString()});
@@ -53,20 +62,11 @@ export async function executeNextStage(run) {
     }
     if (run.status === "building") {
       const input = {briefing: run.briefing, researcher_evidence: run.outputs.researcher.evidence_items, available_media:run.media, designer: run.outputs.designer};
-      let r, v, code, errors = [];
-      for (let attempt = 0; attempt < 2; attempt++) {
-        r = await callStructured(agents.maker, attempt === 0 ? input : {
-          ...input,
-          previous_attempt_rejected: errors,
-          correction_instruction: "Rebuild a smaller version from scratch with semantic HTML, CSS and JavaScript. Avoid storage, network requests, external links, parent-window access, Function, eval and inline event attributes. Keep {{HERO_ATTRIBUTION}} as unlinked literal text inside small or figcaption; the system adds its safe link later.",
-        }, tracker);
-        r.output.files = sanitiseMakerFiles(r.output.files);
-        v = validateHandoff("maker", r.output, {...run.outputs,media:run.media});
-        code = validateMakerFiles(r.output.files);
-        errors = [...v.errors, ...code.errors];
-        if (!errors.length) break;
-        run.validations.maker_attempts = attempt + 1;
-      }
+      const r = await callStructured(agents.maker, input, tracker);
+      r.output.files = sanitiseMakerFiles(r.output.files);
+      const v = validateHandoff("maker", r.output, {...run.outputs,media:run.media});
+      const code = validateMakerFiles(r.output.files);
+      const errors = [...v.errors, ...code.errors];
       run.validations.code = code;
       if (errors.length) throw new Error(`MAKER_VALIDATION:${errors.join("|")}`);
       run.outputs.maker = r.output;
