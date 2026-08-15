@@ -34,6 +34,7 @@ export function validateHandoff(stage, output, cumulative = {}) {
     if (!output.files?.html || !output.files?.css || !output.files?.javascript) errors.push("Maker must deliver HTML, CSS and JavaScript");
     if (output.build_status !== "ready") errors.push("Maker build is not ready");
     if (cumulative.media?.hero_photo && (!output.files?.html?.includes("{{HERO_IMAGE}}") || !output.files?.html?.includes("{{HERO_ATTRIBUTION}}"))) errors.push("Maker must place the supplied hero image and attribution tokens");
+    if (!output.files?.html?.includes("{{REWARD_BADGE}}")) errors.push("Maker must place the {{REWARD_BADGE}} token in the Reward view");
     if (!/<header[\s>]/i.test(output.files?.html||"") || !/<nav[\s>]/i.test(output.files?.html||"") || ((output.files?.html||"").match(/<section[\s>]/gi)?.length??0)<3) errors.push("Maker must deliver a rich microsite with a hero, navigation and three content sections");
     if (output.product_type === "interactive_timeline" && !/\bnext\b/i.test(output.files?.html||"")) errors.push("Timeline must include a visible Next control");
   }

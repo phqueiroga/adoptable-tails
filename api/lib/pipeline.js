@@ -4,6 +4,7 @@ import {sanitiseMakerFiles, validateMakerFiles} from "../../src/code-validator.j
 import {callStructured, createUsageTracker, ensureEvidenceTrace, ensureMinimumPlaceEvidence, reconcileToolQueries} from "./anthropic.js";
 import {executeExternalTool} from "./external-tools.js";
 import {saveRun} from "./storage.js";
+import {testGeneratedPage} from "../../src/page-functional-test.js";
 
 const terminal = new Set(["approved", "revision_required", "rejected", "failed"]);
 const makerSummary = (maker = {}) => ({
@@ -42,6 +43,7 @@ export async function executeNextStage(run) {
       run.tool_calls = [placeCall];
       run.outputs.researcher = r.output;
       run.media = heroMedia(r.tool_calls);
+      if (!run.media.hero_photo) throw new Error("RESEARCH_NO_PHOTO:No verifiable photo of the attraction was found; every experience must show a real image of the location");
       run.handoffs.push({from: "researcher", to: "designer", validated: true, at: new Date().toISOString()});
       run.status = "designing";
       await saveRun(run);
@@ -63,8 +65,10 @@ export async function executeNextStage(run) {
       r.output.files = sanitiseMakerFiles(r.output.files);
       const v = validateHandoff("maker", r.output, {...run.outputs,media:run.media});
       const code = validateMakerFiles(r.output.files);
-      const errors = [...v.errors, ...code.errors];
+      const functional = code.valid ? await testGeneratedPage(r.output.files, run.outputs.designer.selected_product) : {valid:true,errors:[]};
+      const errors = [...v.errors, ...code.errors, ...functional.errors];
       run.validations.code = code;
+      run.validations.functional = functional;
       if (errors.length) throw new Error(`MAKER_VALIDATION:${errors.join("|")}`);
       run.outputs.maker = r.output;
       run.handoffs.push({from: "maker", to: "communicator", validated: true, at: new Date().toISOString()});
@@ -83,7 +87,7 @@ export async function executeNextStage(run) {
       return run;
     }
     if (run.status === "reviewing") {
-      const r = await callStructured(agents.manager, {briefing: run.briefing, tool_calls: run.tool_calls, available_media:run.media, researcher:{research_brief:run.outputs.researcher.research_brief,evidence_items:run.outputs.researcher.evidence_items}, designer: run.outputs.designer, maker: makerSummary(run.outputs.maker), code_validation: run.validations.code, communicator: run.outputs.communicator, handoffs: run.handoffs}, tracker);
+      const r = await callStructured(agents.manager, {briefing: run.briefing, tool_calls: run.tool_calls, available_media:run.media, researcher:{research_brief:run.outputs.researcher.research_brief,evidence_items:run.outputs.researcher.evidence_items}, designer: run.outputs.designer, maker: makerSummary(run.outputs.maker), code_validation: run.validations.code, functional_validation: run.validations.functional, communicator: run.outputs.communicator, handoffs: run.handoffs}, tracker);
       const v = validateHandoff("manager", r.output, run.outputs);
       if (!v.valid) throw new Error(`MANAGER_CONTRACT:${v.errors.join("|")}`);
       run.outputs.manager = r.output;
