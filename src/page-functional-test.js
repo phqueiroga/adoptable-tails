@@ -1,5 +1,5 @@
 import { JSDOM, VirtualConsole } from "jsdom";
-import { injectHeroMedia, injectRewardBadge, makeSrcdoc } from "./code-validator.js";
+import { injectHeroMedia, injectMissions, injectRewardBadge, makeSrcdoc } from "./code-validator.js";
 
 const NEXT = /\bnext\b/i;
 const PREVIOUS = /\bprevious\b/i;
@@ -61,9 +61,9 @@ function missionScopeOf(control) {
   return control.ownerDocument.body;
 }
 
-export async function testGeneratedPage(files, productType) {
+export async function testGeneratedPage(files, productType, missions = []) {
   const errors = [];
-  const previewFiles = injectRewardBadge(injectHeroMedia(files, "", { label: "Preview photo", url: "" }), productType);
+  const previewFiles = injectRewardBadge(injectMissions(injectHeroMedia(files, "", { label: "Preview photo", url: "" }), missions), productType);
   const srcdoc = makeSrcdoc(previewFiles);
 
   let dom;
@@ -81,7 +81,7 @@ export async function testGeneratedPage(files, productType) {
 
   const contentSections = [...window.document.querySelectorAll("section")].filter((el) => (el.textContent || "").trim().length > 20);
   const everVisibleSections = new Set();
-  const rewardSection = window.document.querySelector(".ec-badge")?.closest("section");
+  const rewardSection = window.document.querySelector("[data-ec-reward]") || window.document.querySelector(".ec-badge")?.closest("section");
   let rewardEverVisible = false;
   const snapshotSections = () => {
     for (const el of contentSections) if (isVisible(el)) everVisibleSections.add(el);
@@ -127,6 +127,16 @@ export async function testGeneratedPage(files, productType) {
       snapshotSections();
     }
     await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+
+  // Navigation clicked before the reward unlocked may have left the reward view hidden behind
+  // the Maker's own tab logic, so revisit every navigation-style control once more.
+  for (const control of controlsOf(window.document)) {
+    if (SUBMIT.test(labelOf(control)) || REVEAL.test(labelOf(control)) || /hint/i.test(labelOf(control))) continue;
+    try {
+      control.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
+    } catch { /* already reported in the main loop */ }
+    snapshotSections();
   }
 
   if (runtimeErrors.length) errors.push(...new Set(runtimeErrors.map((message) => `Runtime error: ${message}`)));

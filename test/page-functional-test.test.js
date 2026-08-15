@@ -89,6 +89,73 @@ test("an off-by-one bug that never counts the fourth mission is caught", async (
   assert.ok(result.errors.some((message) => /no congratulations/i.test(message)), JSON.stringify(result.errors));
 });
 
+const PLATFORM_MISSIONS = [
+  { title: "Columns", teaser: "Count them", question: "How many columns?", answer: "86", hint: "Look up", evidence_id: "e1" },
+  { title: "Bench", teaser: "Look closely", question: "Dominant colour?", answer: "blue", hint: "Sea-like", evidence_id: "e2" },
+  { title: "Viaduct", teaser: "Find the gaps", question: "What lets light in?", answer: "arches", hint: "Curved openings", evidence_id: "e3" },
+  { title: "Terrace", teaser: "Step back", question: "What pattern?", answer: "spiral", hint: "It turns", evidence_id: "e4" },
+];
+
+// The Maker supplies only layout and content: no inputs, no hint/reveal/submit buttons,
+// no scoring and no unlock logic. Everything interactive comes from the platform.
+const MAKER_WITHOUT_ANY_MECHANIC = {
+  html: '<main><header><h1>Park Quest</h1></header><nav><button id="nav-x">Experience</button><button id="nav-r">Reward</button></nav><section><h2>Discover</h2><p>Some grounded context about the attraction goes here.</p></section><section><h2>Experience</h2><p>Framing copy written by the Maker.</p>{{MISSIONS}}</section><section data-ec-reward><h2>Reward</h2><p>The prize content written by the Maker.</p>{{REWARD_BADGE}}</section></main>',
+  css: "body{font-family:Georgia,serif}",
+  javascript: "document.querySelector('#nav-x').addEventListener('click',()=>{document.body.dataset.view='x'});document.querySelector('#nav-r').addEventListener('click',()=>{document.body.dataset.view='r'});",
+};
+
+test("the platform mission engine makes a mechanic-free Maker page fully playable", async () => {
+  const result = await testGeneratedPage(MAKER_WITHOUT_ANY_MECHANIC, "treasure_hunt", PLATFORM_MISSIONS);
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.valid, true);
+});
+
+test("the reward stays locked until every mission is submitted", async () => {
+  const { injectMissions, injectRewardBadge, makeSrcdoc } = await import("../src/code-validator.js");
+  const { JSDOM } = await import("jsdom");
+  const files = injectRewardBadge(injectMissions(MAKER_WITHOUT_ANY_MECHANIC, PLATFORM_MISSIONS), "treasure_hunt");
+  const dom = new JSDOM(makeSrcdoc(files), { runScripts: "dangerously", pretendToBeVisual: true });
+  const { window } = dom;
+  const reward = window.document.querySelector("[data-ec-reward]");
+  const missions = [...window.document.querySelectorAll(".ec-mission")];
+  assert.equal(missions.length, 4);
+  assert.equal(window.getComputedStyle(reward).display, "none", "reward must start locked");
+
+  const play = (mission) => {
+    mission.querySelector(".ec-reveal-btn").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    mission.querySelector(".ec-submit-btn").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  };
+  missions.slice(0, 3).forEach(play);
+  assert.equal(window.getComputedStyle(reward).display, "none", "reward must stay locked after only three missions");
+
+  play(missions[3]);
+  assert.notEqual(window.getComputedStyle(reward).display, "none", "the fourth mission must unlock the reward");
+  assert.equal(window.document.querySelector("[data-ec-complete]").hidden, false);
+  assert.match(window.document.querySelector("[data-ec-progress]").textContent, /4 of 4/);
+  dom.window.close();
+});
+
+test("a wrong answer is rejected and the hint does not complete the mission", async () => {
+  const { injectMissions, makeSrcdoc } = await import("../src/code-validator.js");
+  const { JSDOM } = await import("jsdom");
+  const dom = new JSDOM(makeSrcdoc(injectMissions(MAKER_WITHOUT_ANY_MECHANIC, PLATFORM_MISSIONS)), { runScripts: "dangerously", pretendToBeVisual: true });
+  const { window } = dom;
+  const mission = window.document.querySelector(".ec-mission");
+  mission.querySelector(".ec-hint-btn").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  assert.match(mission.querySelector(".ec-feedback").textContent, /Hint: Look up/);
+  assert.equal(mission.classList.contains("ec-done"), false);
+
+  mission.querySelector(".ec-answer").value = "12";
+  mission.querySelector(".ec-submit-btn").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  assert.match(mission.querySelector(".ec-feedback").textContent, /Not quite/);
+  assert.equal(mission.classList.contains("ec-done"), false);
+
+  mission.querySelector(".ec-answer").value = "86";
+  mission.querySelector(".ec-submit-btn").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  assert.equal(mission.classList.contains("ec-done"), true);
+  dom.window.close();
+});
+
 test("a page whose button throws a runtime error fails the functional test", async () => {
   const files = {
     html: "<main><h1>Crashy Page</h1><button id='go'>Start</button></main>",
