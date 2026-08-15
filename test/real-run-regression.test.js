@@ -1,6 +1,51 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { testGeneratedPage } from "../src/page-functional-test.js";
+import { validateHandoff } from "../src/contracts.js";
+import { SCORPIOS_OVERLAP_BUG } from "./fixtures/scorpios-overlap.js";
+
+// Real Maker output from an approved run whose hero title visibly overlapped the "Why Visit
+// Now" paragraph. The cause was structural: .hero-overlay (position:absolute) was authored as
+// a SIBLING of .hero (position:relative) instead of a child, so it anchored to the section and
+// justify-content:flex-end pushed the title to the bottom of the whole section.
+test("catches the real hero overlay that anchors to the page instead of the hero", async () => {
+  const result = await testGeneratedPage(SCORPIOS_OVERLAP_BUG, "treasure_hunt", []);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /no positioned ancestor/i.test(message)), JSON.stringify(result.errors));
+  assert.ok(result.errors.some((message) => /hero-overlay/.test(message)), JSON.stringify(result.errors));
+});
+
+test("the same page passes once the overlay is nested inside the hero", async () => {
+  const fixed = { ...SCORPIOS_OVERLAP_BUG, html: SCORPIOS_OVERLAP_BUG.html.replace(/<\/div>\s*<div class="hero-overlay">/, '<div class="hero-overlay">').replace(/(<p class="tagline">[^<]*<\/p>\s*<\/div>)/, "$1</div>") };
+  const result = await testGeneratedPage(fixed, "treasure_hunt", []);
+  assert.ok(!result.errors.some((message) => /no positioned ancestor/i.test(message)), JSON.stringify(result.errors));
+});
+
+const boringMissions = [
+  { title: "Arrival", teaser: "t", question: "What time does Scorpios open each day?", answer: "11:00 AM daily", hint: "h", evidence_id: "Q1" },
+  { title: "Access", teaser: "t", question: "Name one accessibility feature the venue provides.", answer: "Wheelchair-accessible entrance", hint: "h", evidence_id: "Q1" },
+  { title: "Setting", teaser: "t", question: "Which beach is it on?", answer: "Paraga Beach", hint: "h", evidence_id: "Q1" },
+  { title: "Kind", teaser: "t", question: "How is it officially classified?", answer: "Restaurant", hint: "h", evidence_id: "Q1" },
+];
+const temptingMissions = [
+  { title: "Winter Plate", teaser: "t", question: "Which slow-cooked Greek winter dish anchors the January menu?", answer: "Stifado", hint: "h", evidence_id: "Q1" },
+  { title: "The Sound", teaser: "t", question: "What replaces the summer DJ set on winter evenings?", answer: "Ambient acoustic sets", hint: "h", evidence_id: "Q1" },
+  { title: "The Ritual", teaser: "t", question: "Which Cycladic winter tradition shapes the long table?", answer: "The communal feast", hint: "h", evidence_id: "Q1" },
+  { title: "The Light", teaser: "t", question: "What material makes the terraces glow at dusk?", answer: "Woven rattan", hint: "h", evidence_id: "Q1" },
+];
+const designerBase = { selected_product: "treasure_hunt", selection_rationale: "r", why_visit_now: "w", signature_moment: "s", supporting_moments: ["a", "b"], experience_concept: "c", navigation_sections: ["Discover", "Experience", "Reward"], interaction_specification: ["1", "2", "3", "4"], gamification_mechanics: ["g"], reward_strategy: { type: "digital_content", title: "t", description: "d", unlock_condition: "u", verification_method: "self_check", operational_status: "deliverable_now" }, required_evidence_ids: ["Q1"], visual_direction: "v", acceptance_criteria: ["ok"] };
+const evidence = { researcher: { evidence_items: [{ entity_id: "Q1" }] } };
+
+test("missions built on opening hours and accessibility are rejected as admin trivia", () => {
+  const result = validateHandoff("designer", { ...designerBase, missions: boringMissions }, evidence);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /build desire to visit/i.test(message)), JSON.stringify(result.errors));
+});
+
+test("missions about food, music, ritual and material are accepted", () => {
+  const result = validateHandoff("designer", { ...designerBase, missions: temptingMissions }, evidence);
+  assert.deepEqual(result.errors, []);
+});
 
 // Real Maker output captured from a live approved run. The CSS used
 // `.section{display:none}` / `.section.active{display:block}` but the JS

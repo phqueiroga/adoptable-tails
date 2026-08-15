@@ -26,6 +26,25 @@ function isVisible(el) {
   return true;
 }
 
+// jsdom has no layout engine, so overlapping boxes cannot be measured. This catches the
+// structural cause behind the most common overlap: an absolutely positioned overlay that
+// sits outside the container it was meant to overlay, so it anchors to the whole page or
+// section instead and lands on top of unrelated content.
+function unanchoredOverlays(window) {
+  const offenders = [];
+  for (const el of window.document.body.querySelectorAll("*")) {
+    if (window.getComputedStyle(el).position !== "absolute") continue;
+    let ancestor = el.parentElement;
+    let anchored = false;
+    while (ancestor && ancestor !== window.document.body) {
+      if (["relative", "absolute", "fixed", "sticky"].includes(window.getComputedStyle(ancestor).position)) { anchored = true; break; }
+      ancestor = ancestor.parentElement;
+    }
+    if (!anchored) offenders.push(el.getAttribute("class") || el.tagName.toLowerCase());
+  }
+  return [...new Set(offenders)];
+}
+
 function visibleText(window) {
   return [...window.document.body.querySelectorAll("*")]
     .filter((el) => el.children.length === 0 && (el.textContent || "").trim())
@@ -152,6 +171,8 @@ export async function testGeneratedPage(files, productType, missions = []) {
   if (clicked.size === 0) errors.push("No functional buttons or controls were found on the generated page");
   if (clicked.size > 0 && mutations === 0) errors.push("Clicking controls produced no visible change — interactions appear non-functional");
   if (contentSections.length && everVisibleSections.size === 0) errors.push("No content section is ever visible on screen (checked via computed display/visibility) — likely a CSS class the script never toggles, or a visibility mechanism the CSS doesn't match");
+  const unanchored = unanchoredOverlays(window);
+  if (unanchored.length) errors.push(`These absolutely positioned elements have no positioned ancestor, so they anchor to the page instead of the box they are meant to overlay and will land on top of unrelated content: ${unanchored.join(", ")}. Nest each one inside its container and give that container position:relative.`);
 
   if (missionCards.length) {
     // The platform owns the mechanic, so these verify the Maker did not hide or break the block.

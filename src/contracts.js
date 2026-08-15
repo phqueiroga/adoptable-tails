@@ -9,6 +9,10 @@ const required = {
   manager: ["decision", "validation_checks", "issues", "executive_summary", "launch_conditions", "risks"]
 };
 
+// Question subjects that read as admin rather than invitation. Kept narrow and phrase-based
+// so a dish that happens to contain "open" or a story about a "star" is not caught.
+const operationalTrivia = /\b(opening|closing)\s+(hours?|times?)|\bwhat time (does|do)\b|\bopen(s|ing)? (daily|every day|year-round|from)\b|\bwheelchair\b|\baccessib(le|ility)\b|\bstar rating\b|\brating\b|\breview count\b|\bhow many (reviews|ratings)\b|\bbusiness status\b|\bpostal|\bpost ?code\b|\bstreet address\b|\bphone number\b/i;
+
 export function validateHandoff(stage, output, cumulative = {}) {
   const errors = [];
   if (!output || typeof output !== "object") return { valid: false, errors: ["Output must be an object"] };
@@ -32,6 +36,10 @@ export function validateHandoff(stage, output, cumulative = {}) {
     if (missions.length<4) errors.push("Designer must declare four missions the platform can render and check");
     else if (!missions.slice(0,4).every((mission)=>mission?.question?.trim()&&mission?.answer?.trim()&&mission?.hint?.trim()&&mission?.title?.trim())) errors.push("Every mission needs a title, a question, a single correct answer and a hint");
     else if (missions.slice(0,4).some((mission)=>mission.answer.trim().length>60)) errors.push("Mission answers must be short and checkable (at most 60 characters), not open-ended reflections");
+    else {
+      const dull=missions.slice(0,4).filter((mission)=>operationalTrivia.test(`${mission.question} ${mission.answer}`));
+      if (dull.length) errors.push(`Missions must build desire to visit, not quiz the visitor on operational metadata. Rewrite these around what the place offers (food, atmosphere, design, ritual, story): ${dull.map((mission)=>`"${mission.title}"`).join(", ")}`);
+    }
   }
   if (stage === "maker") {
     if (output.product_type !== cumulative.designer?.selected_product) errors.push("Maker changed the selected product");
