@@ -4,7 +4,7 @@ export const agentOrder = ["researcher", "designer", "maker", "communicator", "m
 const required = {
   researcher: ["research_question", "opportunity_diagnosis", "tool_decisions", "source_queries", "evidence_items", "unknowns", "research_brief"],
   designer: ["selected_product", "selection_rationale", "why_visit_now", "signature_moment", "supporting_moments", "experience_concept", "navigation_sections", "interaction_specification", "gamification_mechanics", "reward_strategy", "required_evidence_ids", "visual_direction", "acceptance_criteria"],
-  maker: ["product_type", "product_title", "implementation_summary", "files", "implemented_features", "evidence_trace", "usage_instructions", "acceptance_check", "known_limitations", "build_status"],
+  maker: ["product_type", "product_title", "implementation_summary", "files", "implemented_features", "known_limitations", "build_status"],
   communicator: ["value_proposition", "audience_message", "experience_name_and_tagline", "visitor_touchpoints", "channel_plan", "launch_sequence", "ready_to_use_copy", "engagement_metrics", "communication_risks"],
   manager: ["decision", "validation_checks", "issues", "executive_summary", "operational_plan", "launch_conditions", "success_metrics", "risks", "future_improvements"]
 };
