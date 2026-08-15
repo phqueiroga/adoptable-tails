@@ -42,7 +42,7 @@ export function injectRewardBadge(files={},productType=""){
   const html=String(files.html??"");
   const heading=html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
   const attraction=escapeHtml((heading?.[1]??"").replace(/<[^>]+>/g,"").trim()||"Experience Compass");
-  const badge=`<section class="ec-badge" role="status" aria-label="Completion badge"><span aria-hidden="true">${badgeIcon[productType]||"✦"}</span><p>${badgeKicker[productType]||"Achievement Unlocked"}</p><h3>${attraction}</h3><small>Collector's badge — earned by completing the experience</small></section>`;
+  const badge=`<div class="ec-badge" role="status" aria-label="Completion badge"><span aria-hidden="true">${badgeIcon[productType]||"✦"}</span><p>${badgeKicker[productType]||"Achievement Unlocked"}</p><h3>${attraction}</h3><small>Collector's badge — earned by completing the experience</small></div>`;
   const injected=html.includes("{{REWARD_BADGE}}")?html.replaceAll("{{REWARD_BADGE}}",badge):html.replace(/<\/main>/i,`${badge}</main>`);
   return {...files,html:injected===html&&!html.includes("{{REWARD_BADGE}}")?html+badge:injected};
 }

@@ -9,6 +9,16 @@ const required = {
   manager: ["decision", "validation_checks", "issues", "executive_summary", "launch_conditions", "risks"]
 };
 
+const nonAnswerInputTypes = new Set(["checkbox", "radio", "button", "submit", "reset", "hidden", "file", "image", "color", "range"]);
+function hasAnswerField(html) {
+  if (/<textarea[\s>]/i.test(html)) return true;
+  const inputs = html.match(/<input\b[^>]*>/gi) ?? [];
+  return inputs.some((tag) => {
+    const type = tag.match(/\btype\s*=\s*["']?([a-z]+)/i)?.[1]?.toLowerCase();
+    return !type || !nonAnswerInputTypes.has(type);
+  });
+}
+
 export function validateHandoff(stage, output, cumulative = {}) {
   const errors = [];
   if (!output || typeof output !== "object") return { valid: false, errors: ["Output must be an object"] };
@@ -37,6 +47,7 @@ export function validateHandoff(stage, output, cumulative = {}) {
     if (!output.files?.html?.includes("{{REWARD_BADGE}}")) errors.push("Maker must place the {{REWARD_BADGE}} token in the Reward view");
     if (!/<header[\s>]/i.test(output.files?.html||"") || !/<nav[\s>]/i.test(output.files?.html||"") || ((output.files?.html||"").match(/<section[\s>]/gi)?.length??0)<3) errors.push("Maker must deliver a rich microsite with a hero, navigation and three content sections");
     if (output.product_type === "interactive_timeline" && !/\bnext\b/i.test(output.files?.html||"")) errors.push("Timeline must include a visible Next control");
+    if (!hasAnswerField(output.files?.html||"")) errors.push("Each mission must require the visitor to type an answer into a real input field, not just tap a button to mark it complete");
   }
   if (stage === "manager" && !["approved", "revision_required", "rejected"].includes(output.decision)) errors.push("Manager decision is invalid");
   return { valid: errors.length === 0, errors };

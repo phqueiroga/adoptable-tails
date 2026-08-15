@@ -52,6 +52,43 @@ test("a timeline whose Next button does nothing fails the functional test", asyn
   assert.ok(result.errors.some((message) => /did not advance|no visible change/i.test(message)));
 });
 
+test("a fully working four-mission reveal/type/submit flow with congratulations passes cleanly", async () => {
+  const files = {
+    html: `<main><h1>Four Missions</h1>
+      <section id="reward" class="locked">{{REWARD_BADGE}}</section>
+      <section><p id="status"></p>
+        <div class="mission"><input type="text" class="ans"><button class="reveal">Reveal answer</button><button class="submit">Submit</button></div>
+        <div class="mission"><input type="text" class="ans"><button class="reveal">Reveal answer</button><button class="submit">Submit</button></div>
+        <div class="mission"><input type="text" class="ans"><button class="reveal">Reveal answer</button><button class="submit">Submit</button></div>
+        <div class="mission"><input type="text" class="ans"><button class="reveal">Reveal answer</button><button class="submit">Submit</button></div>
+      </section></main>`,
+    css: "#reward.locked{display:none}",
+    javascript: `let completed=0;document.querySelectorAll('.mission').forEach((m,idx)=>{const input=m.querySelector('.ans');m.querySelector('.reveal').addEventListener('click',()=>{input.value='answer'+idx});m.querySelector('.submit').addEventListener('click',()=>{completed++;if(completed===4){document.getElementById('status').textContent='Congratulations! You completed all missions.';document.getElementById('reward').classList.remove('locked')}})});`,
+  };
+  const result = await testGeneratedPage(files, "treasure_hunt");
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.valid, true);
+});
+
+test("an off-by-one bug that never counts the fourth mission is caught", async () => {
+  const files = {
+    html: `<main><h1>Four Missions</h1>
+      <section id="reward" class="locked">{{REWARD_BADGE}}</section>
+      <section>
+        <div class="mission" data-idx="0"><input type="text" class="ans"><button class="reveal">Reveal answer</button><button class="submit">Submit</button></div>
+        <div class="mission" data-idx="1"><input type="text" class="ans"><button class="reveal">Reveal answer</button><button class="submit">Submit</button></div>
+        <div class="mission" data-idx="2"><input type="text" class="ans"><button class="reveal">Reveal answer</button><button class="submit">Submit</button></div>
+        <div class="mission" data-idx="3"><input type="text" class="ans"><button class="reveal">Reveal answer</button><button class="submit">Submit</button></div>
+      </section></main>`,
+    css: "#reward.locked{display:none}",
+    javascript: `let completed=0;document.querySelectorAll('.mission').forEach((m,idx)=>{const input=m.querySelector('.ans');m.querySelector('.reveal').addEventListener('click',()=>{input.value='answer'+idx});m.querySelector('.submit').addEventListener('click',()=>{if(idx<3)completed++;if(completed===4)document.getElementById('reward').classList.remove('locked')})});`,
+  };
+  const result = await testGeneratedPage(files, "treasure_hunt");
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((message) => /reward section never becomes visible/i.test(message)), JSON.stringify(result.errors));
+  assert.ok(result.errors.some((message) => /no congratulations/i.test(message)), JSON.stringify(result.errors));
+});
+
 test("a page whose button throws a runtime error fails the functional test", async () => {
   const files = {
     html: "<main><h1>Crashy Page</h1><button id='go'>Start</button></main>",
