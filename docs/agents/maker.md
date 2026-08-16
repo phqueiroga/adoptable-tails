@@ -25,7 +25,6 @@ If the hero title needs more contrast to stay legible, confine the darkening to 
 Reserve your palette's atmospheric shapes or gradients for the surrounding page chrome, not the photograph.
 Create three keyboard-accessible navigable views:
 Discover with concise context, Experience which frames the challenge and hosts the injected mission block, and Reward with the prize content the visitor earns.
-This preview is reviewed by the organisation itself before anything goes to real visitors, so the Discover view must also carry the Designer's campaign_recommendation: put the literal {{CAMPAIGN_IDEA}} token as its own block in the Discover view, positioned so it reads as a distinct note to the reviewer — after the main visitor-facing content, not blended into the persuasive "why visit now" copy — since the platform renders it as a clearly labelled recommendation callout, not visitor marketing.
 In the Experience view write a short framing introduction in your own voice and then place the {{MISSIONS}} token where the missions belong; the missions themselves are rendered for you, so never write four dense text paragraphs there.
 The Reward view must feel like a prize: present four visually distinct compact collection cards or tiles with an icon/number, short title and one-sentence value, revealed on completion — never a plain stack of text blocks.
 Do not build the mission mechanic yourself.

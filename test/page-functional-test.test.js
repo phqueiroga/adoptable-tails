@@ -196,26 +196,6 @@ test("badge_presentable_in_person adds an honestly hedged in-person line, still 
   dom.window.close();
 });
 
-test("the campaign recommendation renders as a distinct callout in the Discover view when the token is placed", async () => {
-  const files = {
-    ...MAKER_WITHOUT_ANY_MECHANIC,
-    html: '<main><header><h1>Park Quest</h1></header><nav><button id="nav-x">Experience</button><button id="nav-r">Reward</button></nav><section><h2>Discover</h2><p>Some grounded context about the attraction goes here.</p>{{CAMPAIGN_IDEA}}</section><section><h2>Experience</h2><p>Framing copy written by the Maker.</p>{{MISSIONS}}</section><section data-ec-reward><h2>Reward</h2><p>The prize content written by the Maker.</p>{{REWARD_BADGE}}</section></main>',
-  };
-  const result = await testGeneratedPage(files, "treasure_hunt", PLATFORM_MISSIONS, undefined, false, "Host a themed weekday night aimed at the missing 50+ audience.");
-  assert.deepEqual(result.errors, []);
-  const { injectCampaignIdea, makeSrcdoc } = await import("../src/code-validator.js");
-  const injected = injectCampaignIdea(files, "Host a themed weekday night aimed at the missing 50+ audience.");
-  assert.match(injected.html, /ec-campaign-idea/);
-  assert.match(injected.html, /Host a themed weekday night/);
-  void makeSrcdoc;
-});
-
-test("a missing {{CAMPAIGN_IDEA}} token fails the functional test when a recommendation exists", async () => {
-  const result = await testGeneratedPage(MAKER_WITHOUT_ANY_MECHANIC, "treasure_hunt", PLATFORM_MISSIONS, undefined, false, "Host a themed weekday night aimed at the missing 50+ audience.");
-  assert.equal(result.valid, false);
-  assert.ok(result.errors.some((message) => /campaign recommendation is never visible/i.test(message)));
-});
-
 test("a wrong answer is rejected and the hint does not complete the mission", async () => {
   const { injectMissions, makeSrcdoc } = await import("../src/code-validator.js");
   const { JSDOM } = await import("jsdom");
