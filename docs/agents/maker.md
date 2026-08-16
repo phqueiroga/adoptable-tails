@@ -28,7 +28,8 @@ Give the hero container a fixed, viewport-relative height (for example 40vh–60
 Reserve your palette's atmospheric shapes or gradients for that surrounding page chrome, not the photograph.
 Create three keyboard-accessible navigable views:
 Discover with concise context, Experience which frames the challenge and hosts the injected mission block, and Reward with the prize content the visitor earns.
-The Designer's campaign_recommendation describes a real-world event or activation for this attraction; work one brief, natural, inviting mention of it into the Discover view in your own visitor-facing voice — a reason to come back or attend, not a business memo — using only what the Designer actually proposed, and never inventing a date, price or detail you were not given.
+Discover's content specifically must include one brief, natural, inviting mention of the Designer's campaign_recommendation in your own visitor-facing voice — a reason to come back or attend, not a business memo — using only what the Designer actually proposed and never inventing a date, price or detail you were not given.
+This belongs only in Discover, as its own small card or paragraph alongside the other context there — never in the Reward view, which is reserved strictly for the prize the visitor actually earns by finishing the missions, not a second pitch for an unrelated future event.
 In the Experience view write a short framing introduction in your own voice and then place the {{MISSIONS}} token where the missions belong; the missions themselves are rendered for you, so never write four dense text paragraphs there.
 The Reward view must feel like a prize: present four visually distinct compact collection cards or tiles with an icon/number, short title and one-sentence value, revealed on completion — never a plain stack of text blocks.
 Do not build the mission mechanic yourself.
