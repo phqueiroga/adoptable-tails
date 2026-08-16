@@ -3,7 +3,7 @@ export const agentOrder = ["researcher", "designer", "maker", "communicator", "m
 
 const required = {
   researcher: ["research_question", "opportunity_diagnosis", "attraction_narrative", "tool_decisions", "source_queries", "evidence_items", "unknowns", "research_brief"],
-  designer: ["selected_product", "selection_rationale", "why_visit_now", "signature_moment", "supporting_moments", "experience_concept", "navigation_sections", "interaction_specification", "gamification_mechanics", "reward_strategy", "required_evidence_ids", "visual_direction", "acceptance_criteria"],
+  designer: ["selected_product", "selection_rationale", "why_visit_now", "signature_moment", "supporting_moments", "experience_concept", "navigation_sections", "interaction_specification", "gamification_mechanics", "reward_strategy", "campaign_recommendation", "required_evidence_ids", "visual_direction", "acceptance_criteria"],
   maker: ["product_type", "product_title", "implementation_summary", "files", "implemented_features", "known_limitations", "build_status"],
   communicator: ["value_proposition", "audience_message", "experience_name_and_tagline", "visitor_touchpoints", "launch_sequence", "ready_to_use_copy", "communication_risks", "client_email_subject", "client_email_body"],
   manager: ["decision", "validation_checks", "issues", "executive_summary", "launch_conditions", "risks"]
@@ -51,6 +51,7 @@ export function validateHandoff(stage, output, cumulative = {}) {
     if ((output.navigation_sections?.length??0)<3) errors.push("Designer must define Discover, Experience and Reward navigation areas");
     if ((output.interaction_specification?.length??0)<4) errors.push("Designer must specify four interactive moments");
     if (!output.why_visit_now?.trim() || !output.signature_moment?.trim() || (output.supporting_moments?.length??0)<2) errors.push("Designer must define a compelling reason to visit now, signature moment and two supporting moments");
+    if ((output.campaign_recommendation??"").trim().length<40) errors.push("Designer's campaign_recommendation must be a concrete, specific idea (at least 40 characters), not a placeholder or a generic \"run a marketing campaign\" statement");
     if (output.reward_strategy?.type==="physical_proposal"&&output.reward_strategy?.operational_status!=="proposal_requires_approval") errors.push("Physical rewards must require organisation approval");
     const identity=output.visual_identity, palette=identity?.palette;
     if (!palette||!["background","surface","ink","accent"].every((key)=>hexPattern.test(String(palette[key]||"")))) errors.push("Designer must declare a visual identity with four valid hex colours (background, surface, ink, accent)");

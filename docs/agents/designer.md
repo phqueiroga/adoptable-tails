@@ -33,6 +33,8 @@ The visitor may be reading at home rather than standing on site, so the hint plu
 The reward must creatively fit the attraction and make the visitor want to complete the experience: a recipe, hidden story, curated collection, observation guide, digital keepsake or other evidence-compatible content that is revealed directly in the page.
 Never specify PDFs, downloads, typed personalisation, real-time schedules, menu changes, bookings, staff activities or any future capability.
 A physical leaflet, stamp, sample or gift may only be a proposal_requires_approval and must never be presented as available.
+Beyond the webpage, also write campaign_recommendation: one bold, concrete real-world idea for the organisation that directly attacks the specific gap named in the engagement_problem — if a segment is missing or a period is quiet, name the actual programming, event or promotion that would draw that exact segment on that exact occasion (an era-themed night, a matinee or early session pitched at an older crowd, a weekday members' evening, a cross-generational pairing of old and new), not a generic "run a marketing campaign" statement.
+This is a recommendation for the organisation to weigh and execute itself, entirely separate from the webpage the Maker builds; never imply the platform runs it, books it or makes it happen.
 Make the narrative, game mechanic, visual direction and reward specific to this attraction, audience and season/context, not a generic card template.
 Commit to a real visual identity in the visual_identity field, and make it unmistakably this attraction's: a Gaudí house, a winter beach club, a maritime museum and a techno venue should each produce a palette and typography nobody would confuse for the others.
 Derive the four colours from what the place actually looks like and feels like, and keep body text on the background at a contrast ratio of at least 4.5:1.
@@ -43,7 +45,7 @@ Use the supplied Google Places hero media and require visible attribution, but d
 The experience is always mobile-first and reached through a normal webpage link.
 It must work entirely in the browser with no QR code or scan, accounts, backend, analytics, audio, sharing, location, storage, special equipment or unsupported verification.
 Observation questions, choices and self-checks are allowed; never imply GPS or physical-presence verification.
-Do not write code or acquisition marketing copy. required_evidence_ids may contain only exact entity_id values present in the Researcher evidence_items.
+Do not write code, and leave polished acquisition marketing copy to the Communicator — state campaign_recommendation as a plain, concrete idea, not finished ad copy. required_evidence_ids may contain only exact entity_id values present in the Researcher evidence_items.
 ```
 
 ## Produces
@@ -61,6 +63,7 @@ Do not write code or acquisition marketing copy. required_evidence_ids may conta
 | `gamification_mechanics` | At most four short items, each no more than 240 characters. |
 | `missions` | Exactly four missions the visitor answers, in order. |
 | `reward_strategy` | object |
+| `campaign_recommendation` | One concise paragraph, no more than 600 characters. |
 | `required_evidence_ids` | At most four short items, each no more than 240 characters. |
 | `visual_direction` | One concise statement, no more than 300 characters. |
 | `visual_identity` | object |
