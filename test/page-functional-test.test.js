@@ -98,6 +98,22 @@ test("the platform protects playability with !important on the decisive rules", 
   assert.match(srcdoc, /\[data-ec-reward\]\.ec-locked\{display:none!important\}/);
 });
 
+test("the platform's own .ec-missions rule does not carry a margin, so it cannot silently override the Maker's own centering", async () => {
+  // A real run set .ec-missions{max-width:800px;margin:0 auto} for a centered layout; the
+  // platform's own .ec-missions rule loads after the Maker's in the same stylesheet, so an
+  // unscoped margin there would win the cascade tie and strip that centering everywhere.
+  const { injectMissions, makeSrcdoc } = await import("../src/code-validator.js");
+  const { JSDOM } = await import("jsdom");
+  const files = injectMissions(
+    { html: '<main><h1>x</h1><section>{{MISSIONS}}</section></main>', css: ".ec-missions{max-width:800px;margin:0 auto}", javascript: "" },
+    [{ title: "M1", teaser: "t", question: "Q1?", answer: "86", hint: "look up", evidence_id: "e1" }],
+  );
+  const dom = new JSDOM(makeSrcdoc(files), { pretendToBeVisual: true });
+  const wrapper = dom.window.document.querySelector("[data-ec-missions]");
+  assert.equal(dom.window.getComputedStyle(wrapper).marginLeft, "auto", "the Maker's own centering margin must survive");
+  dom.window.close();
+});
+
 test("the reward stays locked until every mission is submitted", async () => {
   const { injectMissions, injectRewardBadge, makeSrcdoc } = await import("../src/code-validator.js");
   const { JSDOM } = await import("jsdom");
