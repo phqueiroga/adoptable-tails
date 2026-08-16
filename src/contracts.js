@@ -2,10 +2,10 @@ export const productTypes = ["treasure_hunt", "interactive_timeline"];
 export const agentOrder = ["researcher", "designer", "maker", "communicator", "manager"];
 
 const required = {
-  researcher: ["research_question", "opportunity_diagnosis", "tool_decisions", "source_queries", "evidence_items", "unknowns", "research_brief"],
+  researcher: ["research_question", "opportunity_diagnosis", "attraction_narrative", "tool_decisions", "source_queries", "evidence_items", "unknowns", "research_brief"],
   designer: ["selected_product", "selection_rationale", "why_visit_now", "signature_moment", "supporting_moments", "experience_concept", "navigation_sections", "interaction_specification", "gamification_mechanics", "reward_strategy", "required_evidence_ids", "visual_direction", "acceptance_criteria"],
   maker: ["product_type", "product_title", "implementation_summary", "files", "implemented_features", "known_limitations", "build_status"],
-  communicator: ["value_proposition", "audience_message", "experience_name_and_tagline", "visitor_touchpoints", "launch_sequence", "ready_to_use_copy", "communication_risks"],
+  communicator: ["value_proposition", "audience_message", "experience_name_and_tagline", "visitor_touchpoints", "launch_sequence", "ready_to_use_copy", "communication_risks", "client_email_subject", "client_email_body"],
   manager: ["decision", "validation_checks", "issues", "executive_summary", "launch_conditions", "risks"]
 };
 
@@ -42,6 +42,7 @@ export function validateHandoff(stage, output, cumulative = {}) {
     if ((output.evidence_items?.length ?? 0) < 4) errors.push("Researcher requires at least four evidence items for the visitor microsite");
     const queryIds=new Set(output.source_queries?.map(query=>query.source_query_id)??[]);
     if (!output.evidence_items?.every((item) => item.entity_id&&item.source_url&&queryIds.has(item.source_query_id))) errors.push("Every evidence item must trace to a recorded source query");
+    if ((output.attraction_narrative??"").trim().length<800) errors.push("Researcher's attraction_narrative must be a substantial ~400-word account of the attraction (at least 800 characters), not a one-line summary");
   }
   if (stage === "designer") {
     if (!productTypes.includes(output.selected_product)) errors.push("Designer selected an invalid product");
@@ -73,6 +74,12 @@ export function validateHandoff(stage, output, cumulative = {}) {
     if (!/<header[\s>]/i.test(output.files?.html||"") || !/<nav[\s>]/i.test(output.files?.html||"") || ((output.files?.html||"").match(/<section[\s>]/gi)?.length??0)<3) errors.push("Maker must deliver a rich microsite with a hero, navigation and three content sections");
     if (!output.files?.html?.includes("{{MISSIONS}}")) errors.push("Maker must place the {{MISSIONS}} token in the Experience view instead of building its own mission mechanic");
     if (!/data-ec-reward\b/i.test(output.files?.html||"")) errors.push("Maker must mark the reward container with data-ec-reward so the platform can unlock it on completion");
+  }
+  if (stage === "communicator") {
+    const body=output.client_email_body??"";
+    const tokenCount=(body.match(/\{\{EXPERIENCE_LINK\}\}/g)??[]).length;
+    if (tokenCount!==1) errors.push(`client_email_body must contain the {{EXPERIENCE_LINK}} token exactly once (found ${tokenCount})`);
+    if (!output.client_email_subject?.trim()) errors.push("Communicator must write a client_email_subject");
   }
   if (stage === "manager" && !["approved", "revision_required", "rejected"].includes(output.decision)) errors.push("Manager decision is invalid");
   return { valid: errors.length === 0, errors };

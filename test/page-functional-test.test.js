@@ -123,6 +123,42 @@ test("the reward stays locked until every mission is submitted", async () => {
   dom.window.close();
 });
 
+test("the badge is repositioned above the Maker's reward cards regardless of where the token was placed", async () => {
+  const { injectMissions, injectRewardBadge, makeSrcdoc } = await import("../src/code-validator.js");
+  const { JSDOM } = await import("jsdom");
+  // The token sits after the Maker's own reward cards, mirroring the real Berghain run where
+  // the badge escaped the lock because it was a sibling, not a child, of data-ec-reward.
+  const files = {
+    ...MAKER_WITHOUT_ANY_MECHANIC,
+    html: '<main><header><h1>Park Quest</h1></header><nav><button id="nav-x">Experience</button><button id="nav-r">Reward</button></nav><section><h2>Discover</h2><p>Some grounded context about the attraction goes here.</p></section><section><h2>Experience</h2><p>Framing copy written by the Maker.</p>{{MISSIONS}}</section><section><div data-ec-reward><p class="card">Card one</p><p class="card">Card two</p></div>{{REWARD_BADGE}}</section></main>',
+  };
+  const built = injectRewardBadge(injectMissions(files, PLATFORM_MISSIONS), "treasure_hunt");
+  const dom = new JSDOM(makeSrcdoc(built), { runScripts: "dangerously", pretendToBeVisual: true });
+  const { window } = dom;
+  const container = window.document.querySelector("[data-ec-reward]:not(.ec-badge)");
+  assert.equal(container.firstElementChild.className, "ec-badge ec-locked", "the badge must be moved to be the first child of the Maker's reward container");
+  assert.equal(window.getComputedStyle(window.document.querySelector(".ec-badge")).display, "none", "a badge placed outside data-ec-reward must still start locked");
+  dom.window.close();
+});
+
+test("a not-yet-available notice is shown for the reward before completion and hides once earned", async () => {
+  const { injectMissions, injectRewardBadge, makeSrcdoc } = await import("../src/code-validator.js");
+  const { JSDOM } = await import("jsdom");
+  const files = injectRewardBadge(injectMissions(MAKER_WITHOUT_ANY_MECHANIC, PLATFORM_MISSIONS), "treasure_hunt");
+  const dom = new JSDOM(makeSrcdoc(files), { runScripts: "dangerously", pretendToBeVisual: true });
+  const { window } = dom;
+  const notice = window.document.querySelector(".ec-locked-notice");
+  assert.ok(notice, "a locked notice must be inserted before the reward container");
+  assert.equal(notice.hidden, false);
+  const missions = [...window.document.querySelectorAll(".ec-mission")];
+  for (const mission of missions) {
+    mission.querySelector(".ec-reveal-btn").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    mission.querySelector(".ec-submit-btn").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  }
+  assert.equal(notice.hidden, true, "the notice must hide once the reward unlocks");
+  dom.window.close();
+});
+
 test("a wrong answer is rejected and the hint does not complete the mission", async () => {
   const { injectMissions, makeSrcdoc } = await import("../src/code-validator.js");
   const { JSDOM } = await import("jsdom");

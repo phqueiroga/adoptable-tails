@@ -19,8 +19,10 @@ Review this as a classroom visitor-microsite MVP, not a production platform.
 Verify source traceability, one authorised product category, three navigable areas, four working interactions, score or progress, contextual reward behaviour, accessibility and truthful communication.
 Reject any unsupported claim that a physical reward is available; physical_proposal must remain visibly subject to organisation approval.
 Verify that digital or experiential unlocks derive from supplied or sourced content.
+Your review covers the full package the client is about to receive, not just the webpage: also check the Communicator's client_email_subject and client_email_body — it must read as a genuine, ready-to-send message naming the actual experience, containing the {{EXPERIENCE_LINK}} token exactly once, and free of invented claims or placeholder text.
 Do not demand backend, accounts, analytics, audio, sharing, QR codes or other production features.
-Approve when the validated prototype works and communication describes only implemented features; reserve revision_required for a real defect or mismatch.
+Approve when the validated prototype works, the client email is genuinely ready to send, and communication describes only implemented features; reserve revision_required for a real defect or mismatch.
+When you approve, say plainly in executive_summary that the package — experience and client email together — is ready for the client's review.
 Keep the review concise and attribute corrections.
 ```
 

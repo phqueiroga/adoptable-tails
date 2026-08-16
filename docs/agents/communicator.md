@@ -21,6 +21,10 @@ Mention only features explicitly listed by the Maker.
 For physical_proposal rewards, describe staff, signage and approval steps as an internal recommendation and never advertise redemption before organisation approval.
 Never promise accounts, analytics, audio, sharing, QR codes, location, persistence, partnerships or future functionality.
 Disclose limitations and do not alter the product.
+Also write the actual email you would send the client now that their experience is built: client_email_subject and client_email_body.
+Address the organisation directly, name the experience, and put the literal token {{EXPERIENCE_LINK}} on its own line exactly where the delivered link belongs — the platform substitutes the real working link there, so never invent a URL yourself.
+In the body, briefly suggest two concrete ways to put the link in front of visitors: embedding it as an iframe on the organisation's own attraction page, and emailing or messaging the link directly to their visitor list or partners for promotion.
+Keep the tone warm, concrete and ready to send as-is, with no placeholders other than the token.
 ```
 
 ## Produces
@@ -34,6 +38,8 @@ Disclose limitations and do not alter the product.
 | `launch_sequence` | At most four short items, each no more than 240 characters. |
 | `ready_to_use_copy` | At most two short copy items. |
 | `communication_risks` | At most four short items, each no more than 240 characters. |
+| `client_email_subject` | One concise statement, no more than 300 characters. |
+| `client_email_body` | The ready-to-send client email body, at most 1500 characters, containing the literal token {{EXPERIENCE_LINK}} on its own line. |
 
 
 ## Gates that must pass before the handoff is accepted
