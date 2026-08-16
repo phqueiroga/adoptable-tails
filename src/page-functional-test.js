@@ -91,18 +91,30 @@ export async function testGeneratedPage(files, productType, missions = [], ident
 
   const contentSections = [...window.document.querySelectorAll("section")].filter((el) => (el.textContent || "").trim().length > 20);
   const everVisibleSections = new Set();
-  const rewardSection = window.document.querySelector("[data-ec-reward]") || window.document.querySelector(".ec-badge")?.closest("section");
+  // Every element carrying data-ec-reward (the Maker's own container, plus the platform's own
+  // badge — which self-tags regardless of where the Maker places the {{REWARD_BADGE}} token).
+  const rewardTargets = [...window.document.querySelectorAll("[data-ec-reward]")];
   const missionBlock = window.document.querySelector("[data-ec-missions]");
+  // Queried up front (not after the click sweep) so visibility is tracked across every sweep,
+  // including the Maker's own tab navigation — a wrapper can be visible while every card inside
+  // it stays display:none under a Maker's own unmet "active" state convention.
+  const missionCards = [...window.document.querySelectorAll(".ec-mission")];
   const completeMessage = window.document.querySelector("[data-ec-complete]");
   let rewardEverVisible = false;
   let missionsEverVisible = false;
   let completeEverVisible = false;
+  let rewardVisibleBeforeEarned = false;
+  const cardsEverVisible = new Set();
   // Tracked over time rather than checked at the end: with tabbed navigation the completion
   // message (in Experience) and the reward (in Reward) can never be on screen simultaneously.
   const snapshotSections = () => {
     for (const el of contentSections) if (isVisible(el)) everVisibleSections.add(el);
-    if (rewardSection && isVisible(rewardSection)) rewardEverVisible = true;
+    const anyRewardVisible = rewardTargets.some((el) => isVisible(el));
+    if (anyRewardVisible) rewardEverVisible = true;
+    const allCardsDone = missionCards.length > 0 && missionCards.every((card) => card.classList.contains("ec-done"));
+    if (anyRewardVisible && !allCardsDone) rewardVisibleBeforeEarned = true;
     if (missionBlock && isVisible(missionBlock)) missionsEverVisible = true;
+    for (const card of missionCards) if (isVisible(card)) cardsEverVisible.add(card);
     if (completeMessage && !completeMessage.hidden && isVisible(completeMessage)) completeEverVisible = true;
   };
   snapshotSections();
@@ -136,7 +148,6 @@ export async function testGeneratedPage(files, productType, missions = [], ident
   // Play every mission the way a visitor would: reveal the answer, then submit it. This runs
   // after the click sweep so the Maker's own navigation has already opened the Experience view;
   // visibility is asserted separately below rather than gating the play itself.
-  const missionCards = [...window.document.querySelectorAll(".ec-mission")];
   for (const card of missionCards) {
     const input = card.querySelector(".ec-answer");
     const revealBtn = card.querySelector(".ec-reveal-btn");
@@ -173,8 +184,10 @@ export async function testGeneratedPage(files, productType, missions = [], ident
   if (missionCards.length) {
     // The platform owns the mechanic, so these verify the Maker did not hide or break the block.
     if (!missionsEverVisible) errors.push("The injected mission block is never visible on screen — the Maker's CSS or view logic is hiding it, so the visitor can never play the experience");
+    if (cardsEverVisible.size < missionCards.length) errors.push(`${missionCards.length - cardsEverVisible.size} of ${missionCards.length} mission cards never become visible on screen — likely a Maker CSS rule (e.g. an "active"/"current" state class the platform's script never applies) that hides each card by default`);
     if (successfulSubmissions < missionCards.length) errors.push(`Only ${successfulSubmissions} of ${missionCards.length} missions could be completed by revealing and submitting the answer`);
-    if (rewardSection && !rewardEverVisible) errors.push("The reward section never becomes visible even after completing every mission");
+    if (rewardTargets.length && !rewardEverVisible) errors.push("The reward section never becomes visible even after completing every mission");
+    if (rewardVisibleBeforeEarned) errors.push("The reward badge or reward section is visible before every mission is completed — a visitor can see it unlocked without having earned it");
     if (!completeEverVisible) errors.push("The completion message never becomes visible after finishing every mission — the Maker's CSS or view logic is hiding it");
   } else if (hasAnswerMechanic) {
     const hasReveal = controlsOf(window.document).some((el) => REVEAL.test(labelOf(el)));

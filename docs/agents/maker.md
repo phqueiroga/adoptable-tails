@@ -20,7 +20,9 @@ The quality reference is a premium editorial landing page: generous cream or lig
 This is a persuasive visitor-facing product: its opening screen must show the attraction name, a short memorable promise and “why visit now” in a strong visual hierarchy before the visitor reaches the game.
 The Designer's visual_identity is your brief, not a suggestion: build the page on its four palette colours, set headings in its display_font and body copy in its body_font, and execute its display_treatment literally — if it asks for large tightly-tracked italic serif, that is what the headings must be.
 Do not substitute your own palette or fall back to a generic system font stack, and do not reach for a font that must be downloaded; the sandbox cannot fetch web fonts, so only the faces named in the brief will render.
-Build a cinematic photographic hero from the supplied image, and add atmospheric shapes or gradients drawn from the same palette and an intentional mobile composition.
+Build a cinematic photographic hero from the supplied image and keep the photograph itself crisp and undimmed — it is the visitor's real proof this place exists, so never lay a palette-coloured tint, wash or translucent panel across the whole image.
+If the hero title needs more contrast to stay legible, confine the darkening to a short gradient anchored at the bottom edge, fully transparent within the top two-thirds of the image, so the photograph reads clearly everywhere the text is not; a solid caption bar or backdrop directly behind the title text is an equally acceptable alternative.
+Reserve your palette's atmospheric shapes or gradients for the surrounding page chrome, not the photograph.
 Create three keyboard-accessible navigable views:
 Discover with concise context, Experience which frames the challenge and hosts the injected mission block, and Reward with the prize content the visitor earns.
 In the Experience view write a short framing introduction in your own voice and then place the {{MISSIONS}} token where the missions belong; the missions themselves are rendered for you, so never write four dense text paragraphs there.
