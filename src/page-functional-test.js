@@ -5,7 +5,6 @@ const NEXT = /\bnext\b/i;
 const PREVIOUS = /\bprevious\b/i;
 const REVEAL = /\breveal\b|show\s*(the\s*)?answer|skip\s*(this\s*)?(question|mission)/i;
 const SUBMIT = /\bsubmit\b|\bcheck\b|\bconfirm\b/i;
-const CELEBRATION = /congratulat|well done|all\s*done|you\s*(did|completed|finished)|mission(s)?\s*complete|all\s*missions|great\s*job|nicely\s*done/i;
 
 function controlsOf(document) {
   return [...document.querySelectorAll("button, [role='button']")];
@@ -43,14 +42,6 @@ function unanchoredOverlays(window) {
     if (!anchored) offenders.push(el.getAttribute("class") || el.tagName.toLowerCase());
   }
   return [...new Set(offenders)];
-}
-
-function visibleText(window) {
-  return [...window.document.body.querySelectorAll("*")]
-    .filter((el) => el.children.length === 0 && (el.textContent || "").trim())
-    .filter((el) => isVisible(el))
-    .map((el) => el.textContent.trim())
-    .join(" ");
 }
 
 function setInputValue(window, input, value) {
@@ -102,12 +93,17 @@ export async function testGeneratedPage(files, productType, missions = []) {
   const everVisibleSections = new Set();
   const rewardSection = window.document.querySelector("[data-ec-reward]") || window.document.querySelector(".ec-badge")?.closest("section");
   const missionBlock = window.document.querySelector("[data-ec-missions]");
+  const completeMessage = window.document.querySelector("[data-ec-complete]");
   let rewardEverVisible = false;
   let missionsEverVisible = false;
+  let completeEverVisible = false;
+  // Tracked over time rather than checked at the end: with tabbed navigation the completion
+  // message (in Experience) and the reward (in Reward) can never be on screen simultaneously.
   const snapshotSections = () => {
     for (const el of contentSections) if (isVisible(el)) everVisibleSections.add(el);
     if (rewardSection && isVisible(rewardSection)) rewardEverVisible = true;
     if (missionBlock && isVisible(missionBlock)) missionsEverVisible = true;
+    if (completeMessage && !completeMessage.hidden && isVisible(completeMessage)) completeEverVisible = true;
   };
   snapshotSections();
 
@@ -179,7 +175,7 @@ export async function testGeneratedPage(files, productType, missions = []) {
     if (!missionsEverVisible) errors.push("The injected mission block is never visible on screen — the Maker's CSS or view logic is hiding it, so the visitor can never play the experience");
     if (successfulSubmissions < missionCards.length) errors.push(`Only ${successfulSubmissions} of ${missionCards.length} missions could be completed by revealing and submitting the answer`);
     if (rewardSection && !rewardEverVisible) errors.push("The reward section never becomes visible even after completing every mission");
-    if (!CELEBRATION.test(visibleText(window))) errors.push("The completion message is never visible after finishing every mission — the Maker's CSS or view logic is likely hiding it");
+    if (!completeEverVisible) errors.push("The completion message never becomes visible after finishing every mission — the Maker's CSS or view logic is hiding it");
   } else if (hasAnswerMechanic) {
     const hasReveal = controlsOf(window.document).some((el) => REVEAL.test(labelOf(el)));
     if (!hasReveal) errors.push('A mission asks visitors to type a specific answer but has no "Reveal answer" control — visitors without on-site knowledge (or a hint that is not enough) can get permanently stuck and never reach the reward');
