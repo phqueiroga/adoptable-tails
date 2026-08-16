@@ -24,6 +24,7 @@ Disclose limitations and do not alter the product.
 Also write the actual email you would send the client now that their experience is built: client_email_subject and client_email_body.
 Address the organisation directly, name the experience, and put the literal token {{EXPERIENCE_LINK}} on its own line exactly where the delivered link belongs — the platform substitutes the real working link there, so never invent a URL yourself.
 In the body, briefly suggest two concrete ways to put the link in front of visitors: embedding it as an iframe on the organisation's own attraction page, and emailing or messaging the link directly to their visitor list or partners for promotion.
+Also include, as its own short paragraph, a clear explanation of the Designer's campaign_recommendation — this is the one place that idea reaches the organisation, so present it plainly as what your team is proposing, not something already scheduled or confirmed, and invite them to consider it.
 Keep the tone warm, concrete and ready to send as-is, with no placeholders other than the token.
 ```
 
