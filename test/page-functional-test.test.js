@@ -181,7 +181,7 @@ test("a neutral, forward-looking reward teaser outside the container still passe
   assert.equal(result.valid, true);
 });
 
-test("badge_presentable_in_person adds an honestly hedged in-person line, styled distinctly and still locked alongside the badge", async () => {
+test("badge_presentable_in_person adds an honestly hedged in-person line, styled as plain body text and still locked alongside the badge", async () => {
   const { injectMissions, injectRewardBadge, makeSrcdoc } = await import("../src/code-validator.js");
   const { JSDOM } = await import("jsdom");
   const off = injectRewardBadge(injectMissions(MAKER_WITHOUT_ANY_MECHANIC, PLATFORM_MISSIONS), "treasure_hunt", false);
@@ -195,6 +195,11 @@ test("badge_presentable_in_person adds an honestly hedged in-person line, styled
   const note = dom.window.document.querySelector(".ec-badge-note");
   assert.ok(note);
   assert.equal(note.closest(".ec-badge"), null, "the note must not be nested inside .ec-badge, or it inherits badge-internal colour rules");
+  // Styled to read as an ordinary paragraph, matching whatever text follows it, not as a
+  // highlighted callout: no forced colour, weight or centering of its own.
+  const style = dom.window.getComputedStyle(note);
+  assert.notEqual(style.fontWeight, "800", "the note must not be forced bold");
+  assert.notEqual(style.textAlign, "center", "the note must not be centered against the rest of the page's own alignment");
   assert.equal(note.getAttribute("data-ec-reward"), "", "the note carries its own data-ec-reward so it locks even though it lives outside the badge");
   assert.equal(dom.window.getComputedStyle(note).display, "none", "the in-person note starts locked, same as the badge");
   dom.window.close();
