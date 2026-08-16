@@ -6,6 +6,7 @@
   "scripts": {
     "test": "node --test",
     "check": "node --check src/briefing.js && node --check src/contracts.js && node --check src/code-validator.js && node --check src/page-functional-test.js && node --check agents/definitions.js && node --check api/lib/storage.js && node --check api/lib/external-tools.js && node --check api/lib/anthropic.js && node --check api/lib/pipeline.js && node --check api/runs.js && node --check api/photo.js && node --check app.js && node --check experience.js && node --check scripts/run-ten-company-eval.js && node --check scripts/retry-eval-runs.js",
+    "docs:agents": "node scripts/generate-agent-docs.js",
     "eval:ten": "node scripts/run-ten-company-eval.js",
     "test:acceptance": "node scripts/run-three-acceptance.js"
   },
