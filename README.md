@@ -34,9 +34,18 @@ Vercel requires `ANTHROPIC_API_KEY`, `GOOGLE_MAPS_API_KEY` and `BLOB_READ_WRITE_
 ## Verification
 
 ```bash
+npm ci
 npm run check
 npm test
 ```
+
+`app.js`/`config.js` point the static frontend at the already-deployed production API by default, so you can also preview the real, working app without deploying your own backend:
+
+```bash
+python3 -m http.server 4173   # any static server works, but the port matters
+```
+
+Then open `http://127.0.0.1:4173/index.html`. The API's CORS policy only allows `https://phqueiroga.github.io` and `http://localhost:4173` / `http://127.0.0.1:4173` as origins (see the `allowed` set in `api/runs.js` and `api/photo.js`) — serving from a different port will have the browser block the API calls. To point the frontend at your own Vercel deployment instead, edit `apiBase` in `config.js`.
 
 `docs/agents/*.md` is generated from the live agent prompts (`npm run docs:agents`) and is checked by `test/agent-docs.test.js` to guarantee it never drifts from what is actually deployed.
 
