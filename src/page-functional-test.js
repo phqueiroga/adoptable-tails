@@ -1,5 +1,5 @@
 import { JSDOM, VirtualConsole } from "jsdom";
-import { injectHeroMedia, injectIdentity, injectMissions, injectRewardBadge, makeSrcdoc } from "./code-validator.js";
+import { injectCampaignIdea, injectHeroMedia, injectIdentity, injectMissions, injectRewardBadge, makeSrcdoc } from "./code-validator.js";
 
 const NEXT = /\bnext\b/i;
 const PREVIOUS = /\bprevious\b/i;
@@ -44,6 +44,25 @@ function unanchoredOverlays(window) {
   return [...new Set(offenders)];
 }
 
+// A Maker who writes the reward's own congratulatory framing ("Congratulations, you have
+// unlocked...") as static intro copy next to — rather than inside — the locked data-ec-reward
+// container has it visible from the first page load, regardless of completion. Checked against
+// each reward target's own text nodes only, so it never flags the platform's own .ec-complete
+// message (a different view entirely) or genuine text already inside the lock.
+const PREMATURE_REWARD = /\bcongratulations\b|\byou(?:'ve| have) (?:unlocked|earned|completed)\b|\breward(?:'s)? (?:is )?(?:now )?unlocked\b/i;
+function prematureRewardLanguage(window, rewardTargets) {
+  const sections = new Set(rewardTargets.map((el) => el.closest("section") || el.parentElement).filter(Boolean));
+  const offenders = [];
+  for (const section of sections) {
+    for (const el of [section, ...section.querySelectorAll("*")]) {
+      if (rewardTargets.some((target) => target === el || target.contains(el))) continue;
+      const ownText = [...el.childNodes].filter((node) => node.nodeType === 3).map((node) => node.textContent).join(" ").trim();
+      if (ownText && PREMATURE_REWARD.test(ownText)) offenders.push(ownText.slice(0, 100));
+    }
+  }
+  return [...new Set(offenders)];
+}
+
 function setInputValue(window, input, value) {
   const proto = input.tagName === "TEXTAREA" ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
   const nativeSetter = Object.getOwnPropertyDescriptor(proto, "value")?.set;
@@ -71,9 +90,9 @@ function missionScopeOf(control) {
   return control.ownerDocument.body;
 }
 
-export async function testGeneratedPage(files, productType, missions = [], identity = undefined) {
+export async function testGeneratedPage(files, productType, missions = [], identity = undefined, presentableInPerson = false, campaignRecommendation = "") {
   const errors = [];
-  const previewFiles = injectIdentity(injectRewardBadge(injectMissions(injectHeroMedia(files, "", { label: "Preview photo", url: "" }), missions), productType), identity);
+  const previewFiles = injectIdentity(injectRewardBadge(injectMissions(injectCampaignIdea(injectHeroMedia(files, "", { label: "Preview photo", url: "" }), campaignRecommendation), missions), productType, presentableInPerson), identity);
   const srcdoc = makeSrcdoc(previewFiles);
 
   let dom;
@@ -95,6 +114,7 @@ export async function testGeneratedPage(files, productType, missions = [], ident
   // badge — which self-tags regardless of where the Maker places the {{REWARD_BADGE}} token).
   const rewardTargets = [...window.document.querySelectorAll("[data-ec-reward]")];
   const missionBlock = window.document.querySelector("[data-ec-missions]");
+  const campaignIdea = window.document.querySelector(".ec-campaign-idea");
   // Queried up front (not after the click sweep) so visibility is tracked across every sweep,
   // including the Maker's own tab navigation — a wrapper can be visible while every card inside
   // it stays display:none under a Maker's own unmet "active" state convention.
@@ -104,6 +124,7 @@ export async function testGeneratedPage(files, productType, missions = [], ident
   let missionsEverVisible = false;
   let completeEverVisible = false;
   let rewardVisibleBeforeEarned = false;
+  let campaignIdeaEverVisible = false;
   const cardsEverVisible = new Set();
   // Tracked over time rather than checked at the end: with tabbed navigation the completion
   // message (in Experience) and the reward (in Reward) can never be on screen simultaneously.
@@ -114,6 +135,7 @@ export async function testGeneratedPage(files, productType, missions = [], ident
     const allCardsDone = missionCards.length > 0 && missionCards.every((card) => card.classList.contains("ec-done"));
     if (anyRewardVisible && !allCardsDone) rewardVisibleBeforeEarned = true;
     if (missionBlock && isVisible(missionBlock)) missionsEverVisible = true;
+    if (campaignIdea && isVisible(campaignIdea)) campaignIdeaEverVisible = true;
     for (const card of missionCards) if (isVisible(card)) cardsEverVisible.add(card);
     if (completeMessage && !completeMessage.hidden && isVisible(completeMessage)) completeEverVisible = true;
   };
@@ -180,6 +202,9 @@ export async function testGeneratedPage(files, productType, missions = [], ident
   if (contentSections.length && everVisibleSections.size === 0) errors.push("No content section is ever visible on screen (checked via computed display/visibility) — likely a CSS class the script never toggles, or a visibility mechanism the CSS doesn't match");
   const unanchored = unanchoredOverlays(window);
   if (unanchored.length) errors.push(`These absolutely positioned elements have no positioned ancestor, so they anchor to the page instead of the box they are meant to overlay and will land on top of unrelated content: ${unanchored.join(", ")}. Nest each one inside its container and give that container position:relative.`);
+  const prematureReward = prematureRewardLanguage(window, rewardTargets);
+  if (prematureReward.length) errors.push(`Text outside the locked data-ec-reward container announces completion before it happens, so a visitor sees this on first load, before finishing any mission: "${prematureReward[0]}". Move any copy that describes what has been unlocked inside the data-ec-reward element, or rephrase it as a teaser that does not assume completion.`);
+  if (campaignRecommendation.trim() && !campaignIdeaEverVisible) errors.push("The Designer's campaign recommendation is never visible on screen — the {{CAMPAIGN_IDEA}} token is missing or the Maker's CSS is hiding it, so the organisation reviewing this preview never sees it");
 
   if (missionCards.length) {
     // The platform owns the mechanic, so these verify the Maker did not hide or break the block.

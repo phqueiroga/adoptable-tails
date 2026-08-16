@@ -74,6 +74,7 @@ export function validateHandoff(stage, output, cumulative = {}) {
     if (!output.files?.html?.includes("{{REWARD_BADGE}}")) errors.push("Maker must place the {{REWARD_BADGE}} token in the Reward view");
     if (!/<header[\s>]/i.test(output.files?.html||"") || !/<nav[\s>]/i.test(output.files?.html||"") || ((output.files?.html||"").match(/<section[\s>]/gi)?.length??0)<3) errors.push("Maker must deliver a rich microsite with a hero, navigation and three content sections");
     if (!output.files?.html?.includes("{{MISSIONS}}")) errors.push("Maker must place the {{MISSIONS}} token in the Experience view instead of building its own mission mechanic");
+    if (!output.files?.html?.includes("{{CAMPAIGN_IDEA}}")) errors.push("Maker must place the {{CAMPAIGN_IDEA}} token in the Discover view so the Designer's campaign recommendation reaches the organisation reviewing this preview");
     if (!/data-ec-reward\b/i.test(output.files?.html||"")) errors.push("Maker must mark the reward container with data-ec-reward so the platform can unlock it on completion");
   }
   if (stage === "communicator") {
