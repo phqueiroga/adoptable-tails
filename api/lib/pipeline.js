@@ -16,6 +16,10 @@ const makerSummary = (maker = {}) => ({
   build_status: maker.build_status,
 });
 export const heroMedia=(toolCalls=[])=>{for(const call of toolCalls){const place=call.result?.results?.find(item=>item.photo);if(place)return{hero_photo:{...place.photo,place_id:place.place_id,place_name:place.label}}}return{hero_photo:null}};
+// Set only by the "revise" action in api/runs.js, and only for the run of stages it triggers —
+// carries the Manager's own issues forward so the agent being redone fixes the named problem
+// instead of blindly re-rolling and hoping for a different result.
+export const revisionInput=(run)=>run.revision_feedback?{revision_feedback:run.revision_feedback}:{};
 
 async function lookupAttraction(briefing) {
   const input={query:briefing.organisation_name,destination:briefing.destination,open_now:false,min_rating:0,page_size:3};
@@ -35,7 +39,7 @@ export async function executeNextStage(run) {
     }
     if (run.status === "researching") {
       const placeCall=await lookupAttraction(run.briefing);
-      const r = await callStructured(agents.researcher, {briefing:run.briefing,google_places:{source_query_id:placeCall.id,...placeCall.result}}, tracker);
+      const r = await callStructured(agents.researcher, {briefing:run.briefing,google_places:{source_query_id:placeCall.id,...placeCall.result},...revisionInput(run)}, tracker);
       r.output=reconcileToolQueries(r.output,[placeCall]);
       r.output=ensureMinimumPlaceEvidence(ensureEvidenceTrace(r.output,[placeCall]),[placeCall]);
       const v = validateHandoff("researcher", r.output);
@@ -49,7 +53,7 @@ export async function executeNextStage(run) {
       return run;
     }
     if (run.status === "designing") {
-      const r = await callStructured(agents.designer, {briefing: run.briefing, researcher: run.outputs.researcher, available_media:run.media}, tracker);
+      const r = await callStructured(agents.designer, {briefing: run.briefing, researcher: run.outputs.researcher, available_media:run.media, ...revisionInput(run)}, tracker);
       const v = validateHandoff("designer", r.output, run.outputs);
       if (!v.valid) throw new Error(`DESIGNER_CONTRACT:${v.errors.join("|")}`);
       run.outputs.designer = r.output;
@@ -59,7 +63,7 @@ export async function executeNextStage(run) {
       return run;
     }
     if (run.status === "building") {
-      const input = {briefing: run.briefing, researcher_evidence: run.outputs.researcher.evidence_items, available_media:run.media, designer: run.outputs.designer};
+      const input = {briefing: run.briefing, researcher_evidence: run.outputs.researcher.evidence_items, available_media:run.media, designer: run.outputs.designer, ...revisionInput(run)};
       const r = await callStructured(agents.maker, input, tracker);
       r.output.files = sanitiseMakerFiles(r.output.files);
       const v = validateHandoff("maker", r.output, {...run.outputs,media:run.media});
@@ -76,7 +80,7 @@ export async function executeNextStage(run) {
       return run;
     }
     if (run.status === "communicating") {
-      const r = await callStructured(agents.communicator, {briefing: run.briefing, reward_strategy:run.outputs.designer.reward_strategy, designer: run.outputs.designer, maker: makerSummary(run.outputs.maker)}, tracker);
+      const r = await callStructured(agents.communicator, {briefing: run.briefing, reward_strategy:run.outputs.designer.reward_strategy, designer: run.outputs.designer, maker: makerSummary(run.outputs.maker), ...revisionInput(run)}, tracker);
       const v = validateHandoff("communicator", r.output, run.outputs);
       if (!v.valid) throw new Error(`COMMUNICATOR_CONTRACT:${v.errors.join("|")}`);
       run.outputs.communicator = r.output;
@@ -92,6 +96,7 @@ export async function executeNextStage(run) {
       run.outputs.manager = r.output;
       run.status = r.output.decision;
       run.completed_at = new Date().toISOString();
+      delete run.revision_feedback;
       await saveRun(run);
       return run;
     }

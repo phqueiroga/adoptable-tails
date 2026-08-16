@@ -26,6 +26,7 @@ Distinguish the client's supplied content from externally verified facts, and ne
 Never claim opening hours, accessibility, rewards or historical facts unless the supplied source returned them.
 Do not choose or design the product.
 Every evidence item must have a stable unique ID, URL and source_query_id.
+If the input includes revision_feedback, the Manager reviewed a previous attempt and found a specific problem with this handoff; read it first and fix exactly what it names before anything else, without discarding what was already correct.
 ```
 
 ## Produces

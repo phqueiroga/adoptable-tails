@@ -47,6 +47,7 @@ The experience is always mobile-first and reached through a normal webpage link.
 It must work entirely in the browser with no QR code or scan, accounts, backend, analytics, audio, sharing, location, storage, special equipment or unsupported verification.
 Observation questions, choices and self-checks are allowed; never imply GPS or physical-presence verification.
 Do not write code, and leave polished acquisition marketing copy to the Communicator — state campaign_recommendation as a plain, concrete idea, not finished ad copy. required_evidence_ids may contain only exact entity_id values present in the Researcher evidence_items.
+If the input includes revision_feedback, the Manager reviewed a previous attempt and found a specific problem with this handoff; read it first and fix exactly what it names before anything else, without discarding what was already correct.
 ```
 
 ## Produces
