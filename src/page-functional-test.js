@@ -44,6 +44,12 @@ function unanchoredOverlays(window) {
   return [...new Set(offenders)];
 }
 
+// A heading font-consistency gate was tried here and abandoned: jsdom neither resolves CSS
+// custom properties (var(--ec-display,...) reads back as that literal string) nor computes
+// inherited font-family on elements with no matching rule (reads back as ""), so the platform's
+// own injected headings never compare equal to the Maker's, regardless of whether a real
+// inconsistency exists. Enforced through Maker prompt guidance instead — see agents/definitions.js.
+
 // A Maker who writes the reward's own congratulatory framing ("Congratulations, you have
 // unlocked...") as static intro copy next to — rather than inside — the locked data-ec-reward
 // container has it visible from the first page load, regardless of completion. Checked against

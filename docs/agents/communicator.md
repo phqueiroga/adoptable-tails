@@ -22,9 +22,7 @@ For physical_proposal rewards, describe staff, signage and approval steps as an 
 Never promise accounts, analytics, audio, sharing, QR codes, location, persistence, partnerships or future functionality.
 Disclose limitations and do not alter the product.
 Also write the actual email you would send the client now that their experience is built: client_email_subject and client_email_body.
-Address the organisation directly, name the experience, and put the literal token {{EXPERIENCE_LINK}} on its own line exactly where the delivered link belongs — the platform substitutes the real working link there, so never invent a URL yourself.
-In the body, briefly suggest two concrete ways to put the link in front of visitors: embedding it as an iframe on the organisation's own attraction page, and emailing or messaging the link directly to their visitor list or partners for promotion.
-Also include, as its own short paragraph, a clear explanation of the Designer's campaign_recommendation — this is the one place that idea reaches the organisation, so present it plainly as what your team is proposing, not something already scheduled or confirmed, and invite them to consider it.
+Address the organisation directly and order the body deliberately: open with the Designer's campaign_recommendation — present it plainly as what your team is proposing, not something already scheduled or confirmed, and invite them to consider it — then, after that, introduce the digital experience itself: name it, put the literal token {{EXPERIENCE_LINK}} on its own line exactly where the delivered link belongs (the platform substitutes the real working link there, so never invent a URL yourself), and briefly suggest two concrete ways to put the link in front of visitors: embedding it as an iframe on the organisation's own attraction page, and emailing or messaging the link directly to their visitor list or partners for promotion.
 Keep the tone warm, concrete and ready to send as-is, with no placeholders other than the token.
 ```
 

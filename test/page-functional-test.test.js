@@ -200,6 +200,21 @@ test("badge_presentable_in_person adds an honestly hedged in-person line, styled
   dom.window.close();
 });
 
+test("the in-person note lands after the Maker's own reward heading, not between the badge and it", async () => {
+  const { injectMissions, injectRewardBadge, makeSrcdoc } = await import("../src/code-validator.js");
+  const { JSDOM } = await import("jsdom");
+  const files = {
+    ...MAKER_WITHOUT_ANY_MECHANIC,
+    html: '<main><header><h1>Park Quest</h1></header><nav><button id="nav-x">Experience</button><button id="nav-r">Reward</button></nav><section><h2>Discover</h2><p>Some grounded context about the attraction goes here.</p></section><section><h2>Experience</h2><p>Framing copy written by the Maker.</p>{{MISSIONS}}</section><section data-ec-reward><h3>Congratulations — you did it</h3><p>The prize content written by the Maker.</p>{{REWARD_BADGE}}</section></main>',
+  };
+  const built = injectRewardBadge(injectMissions(files, PLATFORM_MISSIONS), "treasure_hunt", true);
+  const dom = new JSDOM(makeSrcdoc(built), { runScripts: "dangerously", pretendToBeVisual: true });
+  const container = dom.window.document.querySelector("[data-ec-reward]:not(.ec-badge):not(.ec-badge-note)");
+  const order = [...container.children].map((el) => el.className || el.tagName);
+  assert.deepEqual(order.slice(0, 3), ["ec-badge ec-locked", "H3", "ec-badge-note ec-locked"], "expected badge, then the Maker's own heading, then the in-person note");
+  dom.window.close();
+});
+
 test("a wrong answer is rejected and the hint does not complete the mission", async () => {
   const { injectMissions, makeSrcdoc } = await import("../src/code-validator.js");
   const { JSDOM } = await import("jsdom");
