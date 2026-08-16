@@ -181,7 +181,7 @@ test("a neutral, forward-looking reward teaser outside the container still passe
   assert.equal(result.valid, true);
 });
 
-test("badge_presentable_in_person adds an honestly hedged in-person line, still locked with the rest of the badge", async () => {
+test("badge_presentable_in_person adds an honestly hedged in-person line, styled distinctly and still locked alongside the badge", async () => {
   const { injectMissions, injectRewardBadge, makeSrcdoc } = await import("../src/code-validator.js");
   const { JSDOM } = await import("jsdom");
   const off = injectRewardBadge(injectMissions(MAKER_WITHOUT_ANY_MECHANIC, PLATFORM_MISSIONS), "treasure_hunt", false);
@@ -189,10 +189,14 @@ test("badge_presentable_in_person adds an honestly hedged in-person line, still 
   const on = injectRewardBadge(injectMissions(MAKER_WITHOUT_ANY_MECHANIC, PLATFORM_MISSIONS), "treasure_hunt", true);
   assert.match(on.html, /ec-badge-note/);
   assert.doesNotMatch(on.html, /redeem|guarantee/i, "the in-person note must stay hedged, never promise a gift outright");
+  // A sibling of .ec-badge, not nested inside it: nesting collided with .ec-badge small's own
+  // colour rule (higher specificity than a single class) and rendered as unreadable dark-on-dark.
   const dom = new JSDOM(makeSrcdoc(on), { runScripts: "dangerously", pretendToBeVisual: true });
   const note = dom.window.document.querySelector(".ec-badge-note");
   assert.ok(note);
-  assert.equal(dom.window.getComputedStyle(note.closest(".ec-badge")).display, "none", "the in-person note ships inside the badge, so it starts locked with everything else");
+  assert.equal(note.closest(".ec-badge"), null, "the note must not be nested inside .ec-badge, or it inherits badge-internal colour rules");
+  assert.equal(note.getAttribute("data-ec-reward"), "", "the note carries its own data-ec-reward so it locks even though it lives outside the badge");
+  assert.equal(dom.window.getComputedStyle(note).display, "none", "the in-person note starts locked, same as the badge");
   dom.window.close();
 });
 
