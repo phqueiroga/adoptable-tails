@@ -13,6 +13,25 @@ const required = {
 // so a dish that happens to contain "open" or a story about a "star" is not caught.
 const operationalTrivia = /\b(opening|closing)\s+(hours?|times?)|\bwhat time (does|do)\b|\bopen(s|ing)? (daily|every day|year-round|from)\b|\bwheelchair\b|\baccessib(le|ility)\b|\bstar rating\b|\brating\b|\breview count\b|\bhow many (reviews|ratings)\b|\bbusiness status\b|\bpostal|\bpost ?code\b|\bstreet address\b|\bphone number\b/i;
 
+const hexPattern = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
+const expandHex = (hex) => (hex.length === 4 ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}` : hex);
+// WCAG relative luminance, used to keep body text legible on the Designer's own background.
+function relativeLuminance(hex) {
+  const full = expandHex(hex);
+  const channels = [1, 3, 5].map((index) => {
+    const value = parseInt(full.slice(index, index + 2), 16) / 255;
+    return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+}
+export function contrastRatio(foreground, background) {
+  const [a, b] = [relativeLuminance(foreground), relativeLuminance(background)].sort((x, y) => y - x);
+  return (a + 0.05) / (b + 0.05);
+}
+// Only faces that ship with mainstream desktop and mobile operating systems: the sandbox CSP
+// blocks font downloads, so anything else silently falls back and erases the identity.
+const installedFonts = /georgia|didot|bodoni|baskerville|palatino|times|garamond|hoefler|copperplate|optima|futura|avenir|gill sans|candara|trebuchet|verdana|tahoma|helvetica|arial|courier|menlo|monaco|consolas|system-ui|-apple-system|blinkmacsystemfont|segoe ui|serif|sans-serif|monospace|cursive|fantasy/i;
+
 export function validateHandoff(stage, output, cumulative = {}) {
   const errors = [];
   if (!output || typeof output !== "object") return { valid: false, errors: ["Output must be an object"] };
@@ -32,6 +51,10 @@ export function validateHandoff(stage, output, cumulative = {}) {
     if ((output.interaction_specification?.length??0)<4) errors.push("Designer must specify four interactive moments");
     if (!output.why_visit_now?.trim() || !output.signature_moment?.trim() || (output.supporting_moments?.length??0)<2) errors.push("Designer must define a compelling reason to visit now, signature moment and two supporting moments");
     if (output.reward_strategy?.type==="physical_proposal"&&output.reward_strategy?.operational_status!=="proposal_requires_approval") errors.push("Physical rewards must require organisation approval");
+    const identity=output.visual_identity, palette=identity?.palette;
+    if (!palette||!["background","surface","ink","accent"].every((key)=>hexPattern.test(String(palette[key]||"")))) errors.push("Designer must declare a visual identity with four valid hex colours (background, surface, ink, accent)");
+    else if (contrastRatio(palette.ink,palette.background)<4.5) errors.push(`Ink on background is only ${contrastRatio(palette.ink,palette.background).toFixed(1)}:1 — body text needs at least 4.5:1 to stay readable`);
+    if (identity&&![identity.display_font,identity.body_font].every((stack)=>installedFonts.test(String(stack||"")))) errors.push("Font stacks must use faces installed by default on phones and desktops — the sandbox cannot download web fonts, so anything else silently falls back");
     const missions=Array.isArray(output.missions)?output.missions:[];
     if (missions.length<4) errors.push("Designer must declare four missions the platform can render and check");
     else if (!missions.slice(0,4).every((mission)=>mission?.question?.trim()&&mission?.answer?.trim()&&mission?.hint?.trim()&&mission?.title?.trim())) errors.push("Every mission needs a title, a question, a single correct answer and a hint");

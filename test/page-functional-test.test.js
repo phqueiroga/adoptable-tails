@@ -154,3 +154,53 @@ test("a page whose button throws a runtime error fails the functional test", asy
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((message) => /boom/.test(message)));
 });
+
+const IDENTITY = {
+  palette: { background: "#0B1A2B", surface: "#132C45", ink: "#EAF2FA", accent: "#E5B769" },
+  display_font: "Didot, 'Bodoni MT', Georgia, serif",
+  body_font: "Optima, Candara, sans-serif",
+  display_treatment: "Large tightly-tracked italic serif",
+  mood: "Nocturnal and maritime",
+};
+
+test("the Designer's identity reaches both the page and the injected block", async () => {
+  const { injectIdentity, injectMissions, injectRewardBadge, makeSrcdoc } = await import("../src/code-validator.js");
+  const { JSDOM } = await import("jsdom");
+  const files = injectIdentity(injectRewardBadge(injectMissions(MAKER_WITHOUT_ANY_MECHANIC, PLATFORM_MISSIONS), "treasure_hunt"), IDENTITY);
+  const dom = new JSDOM(makeSrcdoc(files), { pretendToBeVisual: true });
+  const styles = dom.window.getComputedStyle(dom.window.document.documentElement);
+  assert.equal(styles.getPropertyValue("--ec-accent").trim(), "#E5B769");
+  assert.equal(styles.getPropertyValue("--ec-display").trim(), "Didot, 'Bodoni MT', Georgia, serif");
+  // The platform block must read those variables rather than hardcoding its own colours.
+  assert.match(makeSrcdoc(files), /\.ec-mission\{[^}]*var\(--ec-accent/);
+  dom.window.close();
+});
+
+test("a malformed identity is ignored rather than injected into the stylesheet", async () => {
+  const { injectIdentity } = await import("../src/code-validator.js");
+  const hostile = { palette: { background: "}</style><script>x()</script>", surface: "#fff", ink: "#000", accent: "url(evil)" }, display_font: "x;@import 'evil'", body_font: "Georgia, serif" };
+  const { css } = injectIdentity({ html: "", css: "body{}", javascript: "" }, hostile);
+  assert.doesNotMatch(css, /<script>|@import|url\(/);
+  assert.match(css, /--ec-bg:#f5f1ed/);
+  assert.match(css, /--ec-display:Georgia,serif/);
+});
+
+test("completing every mission fires the celebration once", async () => {
+  const { injectMissions, makeSrcdoc } = await import("../src/code-validator.js");
+  const { JSDOM } = await import("jsdom");
+  const dom = new JSDOM(makeSrcdoc(injectMissions(MAKER_WITHOUT_ANY_MECHANIC, PLATFORM_MISSIONS)), { runScripts: "dangerously", pretendToBeVisual: true });
+  const { window } = dom;
+  const play = (card) => {
+    card.querySelector(".ec-reveal-btn").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    card.querySelector(".ec-submit-btn").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  };
+  const cards = [...window.document.querySelectorAll(".ec-mission")];
+  cards.slice(0, 3).forEach(play);
+  assert.equal(window.document.querySelectorAll(".ec-confetti").length, 0, "must not fire before the last mission");
+  play(cards[3]);
+  assert.equal(window.document.querySelectorAll(".ec-confetti").length, 1);
+  // Re-submitting an already-completed mission must not stack a second layer.
+  play(cards[3]);
+  assert.equal(window.document.querySelectorAll(".ec-confetti").length, 1);
+  dom.window.close();
+});

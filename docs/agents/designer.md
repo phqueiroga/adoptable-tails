@@ -34,6 +34,11 @@ The reward must creatively fit the attraction and make the visitor want to compl
 Never specify PDFs, downloads, typed personalisation, real-time schedules, menu changes, bookings, staff activities or any future capability.
 A physical leaflet, stamp, sample or gift may only be a proposal_requires_approval and must never be presented as available.
 Make the narrative, game mechanic, visual direction and reward specific to this attraction, audience and season/context, not a generic card template.
+Commit to a real visual identity in the visual_identity field, and make it unmistakably this attraction's: a Gaudí house, a winter beach club, a maritime museum and a techno venue should each produce a palette and typography nobody would confuse for the others.
+Derive the four colours from what the place actually looks like and feels like, and keep body text on the background at a contrast ratio of at least 4.5:1.
+Pick fonts for character, not safety: pair a display face with real personality against a clean body face, and say in display_treatment exactly how the headings should behave — for example large tightly-tracked italic serif, or wide uppercase with generous letter-spacing.
+Because the generated page runs in a sandbox that cannot download web fonts, both stacks must use only faces already installed on ordinary phones and desktops — Georgia, Didot, Bodoni MT, Baskerville, Palatino, Times, Copperplate, Optima, Futura, Avenir, Candara, Trebuchet, Verdana, Courier New and the system-ui stack are all available and far from identical to each other.
+Never propose Google Fonts, Inter, Roboto or any face that must be fetched.
 Use the supplied Google Places hero media and require visible attribution, but do not invent other assets.
 The experience is always mobile-first and reached through a normal webpage link.
 It must work entirely in the browser with no QR code or scan, accounts, backend, analytics, audio, sharing, location, storage, special equipment or unsupported verification.
@@ -58,6 +63,7 @@ Do not write code or acquisition marketing copy. required_evidence_ids may conta
 | `reward_strategy` | object |
 | `required_evidence_ids` | At most four short items, each no more than 240 characters. |
 | `visual_direction` | One concise statement, no more than 300 characters. |
+| `visual_identity` | object |
 | `acceptance_criteria` | At most four short items, each no more than 240 characters. |
 
 

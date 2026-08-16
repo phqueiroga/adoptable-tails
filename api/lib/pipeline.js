@@ -64,7 +64,7 @@ export async function executeNextStage(run) {
       r.output.files = sanitiseMakerFiles(r.output.files);
       const v = validateHandoff("maker", r.output, {...run.outputs,media:run.media});
       const code = validateMakerFiles(r.output.files);
-      const functional = code.valid ? await testGeneratedPage(r.output.files, run.outputs.designer.selected_product, run.outputs.designer.missions) : {valid:true,errors:[]};
+      const functional = code.valid ? await testGeneratedPage(r.output.files, run.outputs.designer.selected_product, run.outputs.designer.missions, run.outputs.designer.visual_identity) : {valid:true,errors:[]};
       const errors = [...v.errors, ...code.errors, ...functional.errors];
       run.validations.code = code;
       run.validations.functional = functional;

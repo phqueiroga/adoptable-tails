@@ -1,5 +1,5 @@
 import { JSDOM, VirtualConsole } from "jsdom";
-import { injectHeroMedia, injectMissions, injectRewardBadge, makeSrcdoc } from "./code-validator.js";
+import { injectHeroMedia, injectIdentity, injectMissions, injectRewardBadge, makeSrcdoc } from "./code-validator.js";
 
 const NEXT = /\bnext\b/i;
 const PREVIOUS = /\bprevious\b/i;
@@ -71,9 +71,9 @@ function missionScopeOf(control) {
   return control.ownerDocument.body;
 }
 
-export async function testGeneratedPage(files, productType, missions = []) {
+export async function testGeneratedPage(files, productType, missions = [], identity = undefined) {
   const errors = [];
-  const previewFiles = injectRewardBadge(injectMissions(injectHeroMedia(files, "", { label: "Preview photo", url: "" }), missions), productType);
+  const previewFiles = injectIdentity(injectRewardBadge(injectMissions(injectHeroMedia(files, "", { label: "Preview photo", url: "" }), missions), productType), identity);
   const srcdoc = makeSrcdoc(previewFiles);
 
   let dom;
