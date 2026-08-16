@@ -11,14 +11,14 @@
 | Repository owner | `phqueiroga` | User's GitHub account |
 | Repository visibility | Public | Supports assessment access and GitHub Pages |
 | Required external API | Google Places | Grounds the named attraction in current place data |
-| Contextual research | Anthropic web search | Adds relevant historical or cultural evidence when needed |
+| Contextual research | Google Places only | Anthropic web search was evaluated and deliberately not implemented — added cost, latency and a further failure mode for a single-agent gain the Researcher's Google Places grounding already covered; the Researcher's live prompt explicitly forbids requesting further research |
+| Visual identity | Designer-owned per attraction | Designer commits to a four-colour palette and installed-font typography per run, contrast- and font-validated by `src/contracts.js` before the Maker builds on it |
+| Reward and mission mechanics | Platform-owned, not agent-owned | Repeated live-testing failures (missions silently unplayable, rewards visible before completion) came from trusting agent-authored code with mechanics that must always work; the platform now renders, scores and locks/unlocks these deterministically regardless of what the Maker writes |
 
-## Pending
+## Superseded
 
-- Supabase project and protected Edge Function deployment
-- Questionnaire wording and scoring weights
-- Visual identity and interface style
-- Deployment and testing evidence
+- Supabase project and protected Edge Function deployment — abandoned with the pivot away from the pet-adoption client; Vercel Blob is the run-state store instead
+- Questionnaire wording and scoring weights — specific to the abandoned pet-adoption matching flow
 ## Proposed scope pivot
 
 ### 2026-08-13 - Tourism Experience Studio specification
